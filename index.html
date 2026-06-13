@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="style.css">
     <!-- PayPal SDK (개발/테스트 시에는 client-id=sb, 실 결제 Live 전환 시에는 발급된 실서버 Client ID로 교체합니다) -->
     <script src="https://www.paypal.com/sdk/js?client-id=AeK3dPx2ju4g9zZZtLzdmkRMypHkFmSqtGSy13C00nX35Gx9G32FprXYoX6FH1l44V0OinF5XB1NiZXy&currency=USD&disable-funding=credit,card"></script>
+    <!-- Portone SDK (국내 카드 및 간편결제 연동용) -->
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
 </head>
 <body>
     <div class="cyber-grid"></div>
@@ -189,6 +191,10 @@
                                     <div class="pack-price">$1.99 USD</div>
                                 </div>
                             </div>
+                            
+                            <!-- 국내 결제 버튼 (Portone) -->
+                            <button id="btn-portone-pay" class="neon-btn font-orbitron" style="width: 100%; padding: 10px 0; font-size: 0.75rem; border-color: var(--neon-cyan); color: var(--neon-cyan); margin-top: 5px;">⚡ 국내 간편결제 (카카오/네이버/카드)</button>
+                            
                             <!-- PayPal Smart Buttons Container -->
                             <div id="paypal-button-container"></div>
                         </div>

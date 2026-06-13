@@ -1988,6 +1988,60 @@ packageCards.forEach(card => {
     });
 });
 
+// Portone 국내 간편 결제 요청 처리 (비동기)
+async function requestPortonePayment() {
+    if (typeof PortOne === 'undefined') {
+        console.error("PortOne SDK를 로드할 수 없습니다.");
+        alert("국내 결제 모듈 로드 실패. 새로고침 후 다시 시도해 주세요.");
+        return;
+    }
+    
+    const addedCredits = selectedPackageCredits;
+    const amountKRW = Math.round(parseFloat(selectedPackagePrice) * 1300); // 0.99달러 -> 약 1300원 환산
+    
+    try {
+        const paymentId = `payment-${Date.now()}`;
+        
+        // 포트원 V2 결제창 호출
+        const response = await PortOne.requestPayment({
+            storeId: "store-8e0da90f-9f03-42e5-bf5f-d57cdf90425a", // 대표님의 가맹점 식별코드
+            paymentId: paymentId,
+            orderName: `Cyber Avoid Credits - ${selectedPackagePrice === '0.99' ? 'STARTER' : 'BOOSTER'}`,
+            totalAmount: amountKRW,
+            currency: "CURRENCY_KRW",
+            channelKey: "channel-key-here", // 대표님이 발급받으실 테스트 채널 키 (임시 플레이스홀더)
+            payMethod: "EASY_PAY"
+        });
+        
+        // 결제 실패 처리
+        if (response.code !== undefined) {
+            console.error("포트원 결제 실패:", response.message);
+            SFX.playGraze();
+            alert(`결제 실패: ${response.message}`);
+            return;
+        }
+        
+        // 결제 성공 시 재화 지급 및 동기화
+        totalCoins += addedCredits;
+        localStorage.setItem('cyber_avoid_coins', totalCoins);
+        
+        // UI 및 HUD 즉시 동기화
+        updateHangarUI();
+        domCoins.innerText = String(totalCoins + sessionCoins).padStart(6, '0');
+        
+        // 사운드 및 플로팅 이펙트
+        SFX.playLevelWarp();
+        spawnFloatingText(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, `+${addedCredits}₵ PURCHASED!`);
+        
+        alert(`결제가 완료되었습니다! ${addedCredits.toLocaleString()}₵ 코인이 정상 지급되었습니다.`);
+        
+    } catch (err) {
+        console.error("포트원 결제 중 오류 발생:", err);
+        SFX.playGraze();
+        alert("결제 처리 중 예상치 못한 에러가 발생했습니다.");
+    }
+}
+
 // PayPal Smart Buttons SDK 초기화 및 예외 강화 버전
 function initPayPal() {
     const container = document.getElementById('paypal-button-container');
@@ -2129,6 +2183,12 @@ btnCtrlMouse.addEventListener('click', () => {
     btnCtrlKeyboard.classList.remove('active');
     helpMouse.classList.remove('hidden');
     helpKeyboard.classList.add('hidden');
+});
+
+// 국내 결제 버튼 클릭 리스너 연결
+document.getElementById('btn-portone-pay').addEventListener('click', () => {
+    SFX.playBeep();
+    requestPortonePayment();
 });
 
 // Sound toggling
