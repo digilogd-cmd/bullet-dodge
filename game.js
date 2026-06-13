@@ -1859,10 +1859,11 @@ function updateHUD() {
 // ----------------------------------------------------
 // 로비 화면 하단의 애드센스 영역에 장착 스킨에 따라 골디/버디 배너 이미지를 띄워주는 함수
 function updateLobbySkinBanner() {
+    const adBox = document.getElementById('lobby-ad-box');
     const bannerDefault = document.getElementById('lobby-skin-banner-default');
     const bannerGoldie = document.getElementById('lobby-skin-banner-goldie');
     const bannerBuddy = document.getElementById('lobby-skin-banner-buddy');
-    if (!bannerGoldie || !bannerBuddy) return;
+    if (!bannerGoldie || !bannerBuddy || !adBox) return;
 
     const activeShip = localStorage.getItem('cyber_avoid_active_ship') || 'default';
     
@@ -1871,9 +1872,13 @@ function updateLobbySkinBanner() {
     bannerGoldie.style.display = 'none';
     bannerBuddy.style.display = 'none';
     
+    adBox.classList.remove('skin-frame-goldie', 'skin-frame-buddy');
+    
     if (activeShip === 'goldie') {
+        adBox.classList.add('skin-frame-goldie');
         bannerGoldie.style.display = 'block';
     } else if (activeShip === 'buddy') {
+        adBox.classList.add('skin-frame-buddy');
         bannerBuddy.style.display = 'block';
     } else {
         if (bannerDefault) bannerDefault.style.display = 'block';

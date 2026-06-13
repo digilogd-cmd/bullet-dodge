@@ -1701,12 +1701,31 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px dashed var(--neon-cyan);
+    border: 1.5px solid rgba(0, 243, 255, 0.35); /* 점선 제거 -> 세련된 실선 네온 블루 */
     position: relative;
     overflow: hidden;
-    border-radius: 4px;
+    border-radius: 6px;
     align-self: center; /* 플렉스 부모 기준 확실한 수평 정렬 */
-    box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.15);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 정방형 크기 스케일 전환 애니메이션 */
+}
+
+/* 🐕 골디 보이저 스킨 장착 시 정방형 골드 네온 액자 오버라이드 */
+.lobby-ad-container.skin-frame-goldie {
+    width: 120px;
+    height: 120px;
+    border-color: var(--neon-yellow);
+    box-shadow: 0 0 15px rgba(255, 251, 0, 0.45), inset 0 0 5px rgba(255, 251, 0, 0.2);
+    border-radius: 12px;
+}
+
+/* 🐕 사이버 버디 스킨 장착 시 정방형 네온 그린 액자 오버라이드 */
+.lobby-ad-container.skin-frame-buddy {
+    width: 120px;
+    height: 120px;
+    border-color: var(--neon-green);
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.45), inset 0 0 5px rgba(57, 255, 20, 0.2);
+    border-radius: 12px;
 }
 
 .adsense-fallback-text {
@@ -1717,18 +1736,23 @@ body {
     pointer-events: none;
 }
 
-/* 🐕 댕댕이 스킨 배너 전용 (짤리지 않게 contain 및 수평정렬) */
+/* 🐕 댕댕이 스킨 배너 전용 (스킨 적용 시 cover로 꽉 차서 큼직하게 연출) */
 .lobby-skin-banner {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* 이미지 비율 유지하여 안 잘리게 */
+    object-fit: cover; /* 정방형 액자가 되므로 꽉 채워서 크게 묘사 */
     position: absolute;
     top: 0;
     left: 50%;
     transform: translateX(-50%); /* 강제 가로 중앙 정렬 */
     z-index: 10;
-    background-color: #000000; /* contain 여백을 위한 블랙 배경 처리 */
+    background-color: #000000;
     pointer-events: none;
+}
+
+/* 기본 비행선 배너만 가로형 contain 유지 */
+#lobby-skin-banner-default {
+    object-fit: contain;
 }
 
 /* ----------------------------------------------------
