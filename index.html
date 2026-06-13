@@ -19,6 +19,11 @@
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
     <!-- 구글 애드센스 공식 연동 스크립트 (대표님의 ca-pub ID로 대체해서 사용 가능) -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+    <!-- Firebase SDK v8 CDN 연동 (바닐라 연동에 최적화된 호환 라이브러리) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
     <div class="cyber-grid"></div>
@@ -33,6 +38,22 @@
         <aside class="arcade-sidebar left-panel">
             <div class="panel-header">STATUS</div>
             <div class="panel-content">
+                <!-- 파일럿 인증 정보 패널 -->
+                <div class="status-item pilot-auth-panel">
+                    <span class="label">PILOT REGISTRY</span>
+                    <div id="pilot-profile-card" class="pilot-profile-card">
+                        <div id="pilot-avatar" class="pilot-avatar-default">👤</div>
+                        <div class="pilot-info">
+                            <span id="pilot-name" class="value small-value text-cyan" style="font-size: 0.68rem !important; letter-spacing: 0.5px;">GUEST PILOT</span>
+                            <span id="pilot-status" class="pilot-status-text">OFFLINE</span>
+                        </div>
+                    </div>
+                    <button id="btn-login-open" class="neon-btn-small btn-cyan" style="width: 100%; margin-top: 5px; font-size: 0.6rem; padding: 5px 0;">PILOT SIGN IN</button>
+                    <button id="btn-logout" class="neon-btn-small btn-pink hidden" style="width: 100%; margin-top: 5px; font-size: 0.6rem; padding: 5px 0;">SIGN OUT</button>
+                </div>
+                
+                <div class="status-divider" style="margin: 5px 0;"></div>
+
                 <div class="status-item">
                     <span class="label">LEVEL</span>
                     <span id="stat-level" class="value text-cyan">01</span>
@@ -401,6 +422,42 @@
         <p>© 2026 Retro Cyber Avoid. Inspired by classic BASIC code. Developed with Antigravity.</p>
     </footer>
 
+    <!-- 사이버펑크 네온 로그인 모달 -->
+    <div id="login-modal" class="login-modal-overlay">
+        <div class="login-modal-content">
+            <div class="login-modal-header">
+                <h2 class="arcade-title text-cyan" style="font-size: 1.2rem;">PILOT SIGN IN</h2>
+                <button id="btn-login-close-modal" class="btn-close-x">×</button>
+            </div>
+            <div class="login-modal-body">
+                <p class="login-desc font-orbitron" style="font-size: 0.72rem; line-height: 1.5; color: rgba(255, 255, 255, 0.65); margin-bottom: 12px;">데이터베이스에 연동하여 파일럿 데이터(코인, 스킨, 점수)를 클라우드에 영구히 저장하십시오.</p>
+                
+                <div class="login-form-group" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; width: 100%;">
+                    <input type="email" id="login-email" placeholder="EMAIL..." class="cyber-input font-orbitron" style="width: 100%; font-size: 0.85rem; letter-spacing: 1px; padding: 8px 10px; text-align: left;">
+                    <input type="password" id="login-password" placeholder="PASSWORD..." class="cyber-input font-orbitron" style="width: 100%; font-size: 0.85rem; letter-spacing: 1px; padding: 8px 10px; text-align: left;">
+                </div>
+
+                <div class="login-actions" style="width: 100%;">
+                    <button id="btn-email-signin" class="neon-btn btn-cyan font-orbitron" style="width: 100%; padding: 8px 0; font-size: 0.75rem; margin-bottom: 8px; letter-spacing: 2px;">SIGN IN WITH EMAIL</button>
+                    <button id="btn-email-signup" class="neon-btn-small font-orbitron" style="width: 100%; color: var(--neon-pink); border-color: var(--neon-pink); padding: 6px 0; font-size: 0.65rem; margin-bottom: 12px; letter-spacing: 1px; display: block;">CREATE NEW ACCOUNT (SIGN UP)</button>
+                </div>
+
+                <div class="auth-divider" style="display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 12px; color: rgba(255,255,255,0.3); font-size: 0.65rem; font-family: var(--font-arcade);">
+                    <span style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1); margin-right: 10px;"></span>
+                    <span>OR</span>
+                    <span style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1); margin-left: 10px;"></span>
+                </div>
+
+                <!-- Google 간편 로그인 -->
+                <button id="btn-google-signin" class="neon-btn font-orbitron" style="width: 100%; border-color: var(--neon-yellow); color: var(--neon-yellow); font-size: 0.75rem; padding: 8px 0; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 2px;">
+                    <span style="font-size: 0.95rem;">🌐</span> GOOGLE QUICK SIGN IN
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로그인 및 인증 모듈 탑재 -->
+    <script src="auth.js?v=2.5"></script>
     <!-- 게임 스크립트 연결 (캐시 버스팅 연동) -->
     <script src="game.js?v=2.5"></script>
 </body>

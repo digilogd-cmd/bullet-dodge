@@ -1631,6 +1631,9 @@ function triggerGameOver() {
     // Save earned session coins
     totalCoins += sessionCoins;
     localStorage.setItem('cyber_avoid_coins', totalCoins);
+    if (typeof syncGameDataToCloud === 'function') {
+        syncGameDataToCloud();
+    }
 
     const btnRestart = document.getElementById('btn-restart');
     btnRestart.classList.add('hidden');
@@ -1883,6 +1886,11 @@ function updateHangarUI() {
     
     // 장착 스킨에 따라 로비 배너 이미지 노출/숨김 업데이트
     updateLobbySkinBanner();
+
+    // Firebase 클라우드 백업 동기화
+    if (typeof syncGameDataToCloud === 'function') {
+        syncGameDataToCloud();
+    }
 }
 
 function handleShipAction(shipId) {
@@ -2391,6 +2399,9 @@ function submitScore() {
         highScore = score;
         localStorage.setItem('cyber_avoid_highscore', highScore);
         domHighScore.innerText = String(highScore).padStart(6, '0');
+    }
+    if (typeof syncGameDataToCloud === 'function') {
+        syncGameDataToCloud();
     }
     
     SFX.playLevelWarp();

@@ -1371,3 +1371,144 @@ body {
     background: var(--neon-pink);
     box-shadow: 0 0 10px var(--neon-pink);
 }
+
+/* ----------------------------------------------------
+   V3 USER AUTH & LOGIN MODAL STYLES
+   ---------------------------------------------------- */
+.pilot-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(0, 243, 255, 0.15);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-top: 5px;
+}
+
+.pilot-avatar-default {
+    width: 28px;
+    height: 28px;
+    background: #1f2235;
+    border: 1.5px solid var(--neon-cyan);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    box-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+}
+
+.pilot-avatar-img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--neon-cyan);
+    object-fit: cover;
+    box-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+}
+
+.pilot-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pilot-status-text {
+    font-size: 0.48rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-family: var(--font-arcade);
+    letter-spacing: 0.5px;
+}
+
+.pilot-status-text.online {
+    color: var(--neon-green);
+    text-shadow: 0 0 4px rgba(57, 255, 20, 0.3);
+}
+
+/* Modal Overlay */
+.login-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(5, 6, 10, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.login-modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Modal Content */
+.login-modal-content {
+    width: 90%;
+    max-width: 360px;
+    background-color: var(--bg-cabinet);
+    border: 3px solid var(--neon-cyan);
+    border-radius: 16px;
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.25), inset 0 0 20px rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    position: relative;
+    animation: scale-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(0, 243, 255, 0.2);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.btn-close-x {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.8rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.btn-close-x:hover {
+    color: var(--neon-pink);
+    text-shadow: 0 0 8px var(--neon-pink);
+}
+
+.login-modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.cyber-input-field {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid var(--neon-cyan);
+    box-shadow: inset 0 0 8px rgba(0, 243, 255, 0.2);
+    color: #ffffff;
+    font-family: var(--font-orbitron);
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    width: 100%;
+    outline: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.cyber-input-field:focus {
+    border-color: var(--neon-pink);
+    box-shadow: inset 0 0 8px rgba(255, 0, 127, 0.2), 0 0 10px rgba(255, 0, 127, 0.3);
+}
