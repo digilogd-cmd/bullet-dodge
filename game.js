@@ -2422,22 +2422,27 @@ nameInput.addEventListener('keydown', (e) => {
     }
 });
 
+// 일시정지 토글 공통 제어 함수 (모바일 터치 및 ESC 동시 대응)
+function togglePauseGame() {
+    if (gameState === STATE_PLAYING) {
+        gameState = STATE_PAUSED;
+        overlayPaused.classList.add('active');
+        SFX.playBeep();
+        SFX.pauseBGM();
+    } else if (gameState === STATE_PAUSED) {
+        gameState = STATE_PLAYING;
+        overlayPaused.classList.remove('active');
+        SFX.playBeep();
+        SFX.resumeBGM();
+    }
+}
+
 // Key bindings
 window.addEventListener('keydown', (e) => {
     keys[e.code] = true;
 
     if (e.code === 'Escape' || e.code === 'KeyP') {
-        if (gameState === STATE_PLAYING) {
-            gameState = STATE_PAUSED;
-            overlayPaused.classList.add('active');
-            SFX.playBeep();
-            SFX.pauseBGM();
-        } else if (gameState === STATE_PAUSED) {
-            gameState = STATE_PLAYING;
-            overlayPaused.classList.remove('active');
-            SFX.playBeep();
-            SFX.resumeBGM();
-        }
+        togglePauseGame();
     }
 });
 
@@ -2490,4 +2495,14 @@ loadRankings();
 initStars();
 initPayPal();
 updateLobbySkinBanner(); // 초기 실행 시 장착 스킨 배너 반영
+
+// 모바일 터치 일시정지 버튼 이벤트 바인딩
+const btnPauseTrigger = document.getElementById('btn-pause-trigger');
+if (btnPauseTrigger) {
+    btnPauseTrigger.addEventListener('click', (e) => {
+        e.stopPropagation(); // 캔버스 터치 전파 방지
+        togglePauseGame();
+    });
+}
+
 requestAnimationFrame(gameLoop);
