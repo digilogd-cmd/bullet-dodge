@@ -433,6 +433,12 @@ const domHighScore = document.getElementById('stat-highscore');
 const domCoins = document.getElementById('stat-coins');
 const domHighscoreBanners = document.querySelectorAll('.new-record');
 
+// 인게임 모바일 HUD 엘리먼트 정의
+const overlayInGameHUD = document.getElementById('in-game-hud');
+const domHUDLevel = document.getElementById('hud-level-val');
+const domHUDShieldBar = document.getElementById('hud-shield-bar');
+const domHUDTime = document.getElementById('hud-time-val');
+
 const overlayStart = document.getElementById('overlay-start');
 const overlayLevelup = document.getElementById('overlay-levelup');
 const overlayGameover = document.getElementById('overlay-gameover');
@@ -1812,6 +1818,40 @@ function updateHUD() {
     domScore.innerText = String(score).padStart(6, '0');
     domHighScore.innerText = String(highScore).padStart(6, '0');
     domCoins.innerText = String(totalCoins + sessionCoins).padStart(6, '0');
+
+    // ==========================================
+    // 🐕 인게임 모바일 HUD 동기화 연동 추가
+    // ==========================================
+    if (overlayInGameHUD) {
+        if (gameState === STATE_PLAYING) {
+            overlayInGameHUD.classList.add('active');
+            
+            if (domHUDLevel) domHUDLevel.innerText = String(level).padStart(2, '0');
+            if (domHUDTime) domHUDTime.innerText = `${survivalTime.toFixed(1)}s`;
+            
+            if (domHUDShieldBar) {
+                if (player && player.isShielded) {
+                    domHUDShieldBar.style.width = '100%';
+                    domHUDShieldBar.style.background = 'linear-gradient(90deg, #00f3ff, #9d00ff)';
+                    domHUDShieldBar.style.boxShadow = '0 0 12px #00f3ff';
+                    domHUDShieldBar.style.animation = 'blink 0.25s infinite alternate';
+                } else {
+                    const percent = player ? (shield / player.maxShield) * 100 : 100;
+                    domHUDShieldBar.style.width = `${percent}%`;
+                    domHUDShieldBar.style.background = 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))';
+                    domHUDShieldBar.style.boxShadow = '0 0 8px var(--neon-cyan)';
+                    
+                    if (percent <= 30) {
+                        domHUDShieldBar.style.animation = 'blink 0.5s infinite alternate';
+                    } else {
+                        domHUDShieldBar.style.animation = 'none';
+                    }
+                }
+            }
+        } else {
+            overlayInGameHUD.classList.remove('active');
+        }
+    }
 }
 
 // ----------------------------------------------------

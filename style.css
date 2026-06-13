@@ -1730,3 +1730,88 @@ body {
     background-color: #000000; /* contain 여백을 위한 블랙 배경 처리 */
     pointer-events: none;
 }
+
+/* ----------------------------------------------------
+   V4 IN-GAME HUD STYLES
+   ---------------------------------------------------- */
+.in-game-hud {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 6; /* 캔버스(0)와 일시정지 버튼(7) 사이에 배치 */
+    background: rgba(8, 9, 15, 0.75);
+    border: 1.5px solid rgba(0, 243, 255, 0.25);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.15), inset 0 0 5px rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    padding: 6px 15px;
+    pointer-events: none; /* 터치 방해 금지 */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.in-game-hud.active {
+    opacity: 1;
+}
+
+.hud-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.hud-label {
+    font-size: 0.55rem;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 1px;
+}
+
+.hud-value {
+    font-family: var(--font-orbitron);
+    font-weight: 900;
+    font-size: 0.82rem;
+    letter-spacing: 0.5px;
+}
+
+/* 실드 컨테이너 */
+.hud-shield-wrapper {
+    flex-grow: 1;
+    max-width: 45%;
+    margin: 0 10px;
+}
+
+.hud-shield-container {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 243, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.5);
+}
+
+.hud-shield-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+    border-radius: 4px;
+    box-shadow: 0 0 6px var(--neon-cyan);
+    transition: width 0.1s ease-out;
+}
+
+/* 모바일 뷰포트에서 HUD 패딩 및 top 위치 콤팩트화 */
+@media (max-width: 480px) {
+    .in-game-hud {
+        top: 10px;
+        width: 86%;
+        padding: 4px 12px;
+    }
+    .hud-value {
+        font-size: 0.75rem;
+    }
+}
