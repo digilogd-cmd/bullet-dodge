@@ -509,6 +509,22 @@ class Player {
             baseMagnet = 40;
             shipScale = 0.85; // 15% smaller!
             baseHitbox = 3.8; // Smaller hitbox core
+        } else if (selectedShip === 'goldie') {
+            // 🐕 골디 보이저 스킨 속성 (빠른 기동성 + 초강력 코인 끌어당김 자석)
+            baseSpeed = 0.88;
+            baseMaxSpeed = 7.0;
+            baseShield = 100;
+            baseMagnet = 155; 
+            shipScale = 0.92; 
+            baseHitbox = 4.0;
+        } else if (selectedShip === 'buddy') {
+            // 🐕 사이버 버디 스킨 속성 (높은 실드 맷집 + 밸런스형 자석)
+            baseSpeed = 0.82;
+            baseMaxSpeed = 6.6;
+            baseShield = 110;
+            baseMagnet = 55;
+            shipScale = 0.92;
+            baseHitbox = 4.3;
         }
         
         // Permanent upgrades application
@@ -539,6 +555,8 @@ class Player {
         if (selectedShip === 'magnet') this.color = 'rgb(57, 255, 20)';
         else if (selectedShip === 'aegis') this.color = 'rgb(157, 0, 255)';
         else if (selectedShip === 'swift') this.color = 'rgb(255, 0, 127)';
+        else if (selectedShip === 'goldie') this.color = 'rgb(255, 179, 0)';  // 골드빛
+        else if (selectedShip === 'buddy') this.color = 'rgb(57, 255, 20)';   // 네온 그린빛
 
         this.damageFlash = 0;
     }
@@ -593,17 +611,40 @@ class Player {
         this.x = Math.max(halfW, Math.min(this.x, CANVAS_WIDTH - halfW));
         this.y = Math.max(halfH, Math.min(this.y, CANVAS_HEIGHT - halfH));
 
+        // 🐕 버디 전용 능력: 15초(900프레임)마다 실드 10 자동 재생
+        const activeShipModel = localStorage.getItem('cyber_avoid_active_ship') || 'default';
+        if (activeShipModel === 'buddy' && (gameState === STATE_PLAYING)) {
+            if (!this.buddyRegenTimer) this.buddyRegenTimer = 0;
+            this.buddyRegenTimer++;
+            if (this.buddyRegenTimer >= 900) {
+                this.buddyRegenTimer = 0;
+                if (shield < this.maxShield) {
+                    shield = Math.min(this.maxShield, shield + 10);
+                    SFX.playShieldPickup();
+                    spawnFloatingText(this.x, this.y - 15, '+10 SHIELD', '#39ff14');
+                }
+            }
+        }
+
         // Exhaust particle trails
         if (Math.random() < 0.45 && (gameState === STATE_PLAYING || gameState === STATE_REVIVE_PROMPT)) {
             const exhaustColor = this.isShielded ? '#00f3ff' : this.color;
-            spawnParticle(
-                this.x - 1 + (Math.random() * 3 - 1.5), 
-                this.y + this.height / 2, 
-                Math.random() * 2 - 1, 
-                2 + Math.random() * 3, 
-                exhaustColor, 
-                22
-            );
+            
+            // 버디 기체일 경우 양쪽 제트팩에서 파티클이 나가도록 처리
+            if (activeShipModel === 'buddy') {
+                spawnParticle(this.x - 14, this.y + 12, Math.random() * 1 - 0.5, 2 + Math.random() * 2, '#39ff14', 16);
+                spawnParticle(this.x + 14, this.y + 12, Math.random() * 1 - 0.5, 2 + Math.random() * 2, '#39ff14', 16);
+            } else {
+                spawnParticle(
+                    this.x - 1 + (Math.random() * 3 - 1.5), 
+                    this.y + this.height / 2, 
+                    Math.random() * 2 - 1, 
+                    2 + Math.random() * 3, 
+                    exhaustColor, 
+                    22
+                );
+            }
+            
             spawnParticle(
                 this.x - 1 + (Math.random() * 3 - 1.5), 
                 this.y + this.height / 2, 
@@ -676,6 +717,141 @@ class Player {
             ctx.lineTo(0, this.height * 0.4);
             ctx.lineTo(-this.width * 0.12, this.height * 0.1);
             ctx.lineTo(-this.width * 0.32, this.height * 0.2);
+        } else if (activeShipModel === 'goldie') {
+            // 🐕 GOLDIE VOYAGER: 주황색 우주복을 입은 귀여운 골든 리트리버
+            // 1. 우주복 바디
+            ctx.fillStyle = '#ff6b00'; // 주황색 우주복
+            ctx.beginPath();
+            ctx.ellipse(0, 8, this.width * 0.4, this.height * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 2. 우주선 부스터 노즐 (우주복 하단)
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-this.width * 0.15, this.height * 0.45, this.width * 0.3, 6);
+            
+            // 3. 리트리버 얼굴
+            ctx.fillStyle = '#ffb300'; // 골든 리트리버 털색
+            ctx.beginPath();
+            ctx.arc(0, -6, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 4. 귀 (처진 귀 모양)
+            ctx.beginPath();
+            ctx.ellipse(-10, -6, 4, 8, Math.PI / 8, 0, Math.PI * 2);
+            ctx.ellipse(10, -6, 4, 8, -Math.PI / 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 5. 눈과 코 (검은 도트)
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(-4, -6, 1.5, 0, Math.PI * 2); // 왼눈
+            ctx.arc(4, -6, 1.5, 0, Math.PI * 2);  // 오른눈
+            ctx.fill();
+            // 코
+            ctx.beginPath();
+            ctx.moveTo(-2, -2);
+            ctx.lineTo(2, -2);
+            ctx.lineTo(0, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // 6. 볼 터치 (귀여운 분홍색 볼)
+            ctx.fillStyle = 'rgba(255, 100, 150, 0.6)';
+            ctx.beginPath();
+            ctx.arc(-7, -2, 2.5, 0, Math.PI * 2);
+            ctx.arc(7, -2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 7. 투명 우주 헬멧
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.7)';
+            ctx.lineWidth = 2.0;
+            ctx.fillStyle = 'rgba(0, 243, 255, 0.08)';
+            ctx.beginPath();
+            ctx.arc(0, -5, 17, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // 8. 꼬리 프로펠러 비행 효과 (헬리콥터처럼 돌아가는 꼬리)
+            ctx.save();
+            ctx.translate(0, this.height * 0.45);
+            const propellerAngle = (Date.now() * 0.04) % (Math.PI * 2);
+            ctx.rotate(propellerAngle);
+            ctx.strokeStyle = '#ffb300';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, 12);
+            ctx.stroke();
+            
+            // 프로펠러 날개 효과
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(-10, 12);
+            ctx.lineTo(10, 12);
+            ctx.stroke();
+            ctx.restore();
+        } else if (activeShipModel === 'buddy') {
+            // 🐕 CYBER BUDDY: 제트팩을 장착하고 한쪽 눈에 사이버 고글을 쓴 크림 리트리버
+            // 1. 제트팩 부스터 (좌우 날개 영역)
+            ctx.fillStyle = '#444';
+            ctx.fillRect(-this.width * 0.55, -2, 6, 20); // 왼쪽 제트팩
+            ctx.fillRect(this.width * 0.45, -2, 6, 20);  // 오른쪽 제트팩
+            
+            // 2. 바디 (크림 리트리버 몸)
+            ctx.fillStyle = '#ffe082'; // 연한 크림색 리트리버 털색
+            ctx.beginPath();
+            ctx.ellipse(0, 8, this.width * 0.38, this.height * 0.38, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 3. 얼굴
+            ctx.beginPath();
+            ctx.arc(0, -6, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 4. 귀
+            ctx.beginPath();
+            ctx.ellipse(-10, -6, 4, 8, Math.PI / 10, 0, Math.PI * 2);
+            ctx.ellipse(10, -6, 4, 8, -Math.PI / 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 5. 일반 눈(오른쪽)과 사이버 고글(왼쪽)
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(4, -6, 1.5, 0, Math.PI * 2); // 오른눈
+            ctx.fill();
+            
+            // 사이버 그린 고글 (왼쪽 눈 위치)
+            ctx.fillStyle = 'rgba(57, 255, 20, 0.85)';
+            ctx.shadowColor = '#39ff14';
+            ctx.shadowBlur = 4;
+            ctx.fillRect(-7, -9, 6, 6); // 네온 그린 렌즈
+            ctx.strokeStyle = '#39ff14';
+            ctx.lineWidth = 1.0;
+            ctx.strokeRect(-7, -9, 6, 6);
+            
+            // 고글 안경다리
+            ctx.strokeStyle = '#444';
+            ctx.beginPath();
+            ctx.moveTo(-7, -6);
+            ctx.lineTo(-12, -6);
+            ctx.stroke();
+            ctx.shadowBlur = 0; // 그림자 초기화
+
+            // 코
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.moveTo(-2, -2);
+            ctx.lineTo(2, -2);
+            ctx.lineTo(0, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // 6. 볼터치 (귀여움 보강)
+            ctx.fillStyle = 'rgba(255, 100, 150, 0.5)';
+            ctx.beginPath();
+            ctx.arc(6, -2, 2.0, 0, Math.PI * 2);
+            ctx.fill();
         } else {
             // DEFAULT NEO PILOT: Interceptor spaceship
             ctx.moveTo(0, -this.height / 2);
@@ -1610,6 +1786,8 @@ function updateHangarUI() {
             let cost = 3000;
             if (shipId === 'aegis') cost = 5000;
             if (shipId === 'swift') cost = 8000;
+            if (shipId === 'goldie') cost = 10000;
+            if (shipId === 'buddy') cost = 12000;
             
             actionBtn.innerText = `BUY: ${cost}₵`;
             actionBtn.disabled = false;
@@ -1661,6 +1839,8 @@ function handleShipAction(shipId) {
         let cost = 3000;
         if (shipId === 'aegis') cost = 5000;
         if (shipId === 'swift') cost = 8000;
+        if (shipId === 'goldie') cost = 10000;
+        if (shipId === 'buddy') cost = 12000;
 
         if (totalCoins >= cost) {
             totalCoins -= cost;
