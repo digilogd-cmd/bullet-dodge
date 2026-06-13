@@ -137,7 +137,8 @@
                         <button id="btn-open-hangar" class="neon-btn btn-pink font-orbitron" style="margin-top: 10px; width: 220px; font-size: 0.8rem; padding: 10px 0;">HANGAR / SHOP</button>
                         
                         <!-- 시작 화면 하단 구글 애드센스 광고 (디스플레이 300x100) -->
-                        <div class="adsense-start" style="width: 300px; height: 100px; margin: 15px auto 0 auto; background: #111; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--neon-cyan); position: relative; overflow: hidden; border-radius: 4px;">
+                        <!-- 시작 화면 하단 구글 애드센스 광고 (디스플레이 300x100) -->
+                        <div class="lobby-ad-container adsense-start" id="lobby-ad-box">
                             <ins class="adsbygoogle"
                                  style="display:inline-block;width:300px;height:100px"
                                  data-ad-client="ca-pub-XXXXXXXXXXXXX"
@@ -145,10 +146,12 @@
                             <script>
                                  try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
                             </script>
-                            <div style="position: absolute; color: #333; font-size: 10px; z-index: -1;" class="font-orbitron">GOOGLE ADSENSE (300x100)</div>
-                            <!-- 스킨 장착 시 띄워주는 스페셜 배너 이미지 영역 -->
-                            <img id="lobby-skin-banner-goldie" src="goldie_voyager_skin.png" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; z-index: 10;" alt="Goldie Voyager">
-                            <img id="lobby-skin-banner-buddy" src="cyber_buddy_skin.png" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; z-index: 10;" alt="Cyber Buddy">
+                            <div class="adsense-fallback-text font-orbitron">GOOGLE ADSENSE (300x100)</div>
+                            
+                            <!-- 스킨 장착 시 및 미장착 시 띄워주는 배너 이미지 영역 (안 잘리게 object-fit: contain 및 수평 중앙 정렬) -->
+                            <img id="lobby-skin-banner-default" src="default_lobby_banner.png" class="lobby-skin-banner" alt="Antigravity Default">
+                            <img id="lobby-skin-banner-goldie" src="goldie_voyager_skin.png" class="lobby-skin-banner" alt="Goldie Voyager" style="display: none;">
+                            <img id="lobby-skin-banner-buddy" src="cyber_buddy_skin.png" class="lobby-skin-banner" alt="Cyber Buddy" style="display: none;">
                         </div>
                     </div>
                 </div>
