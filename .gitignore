@@ -1,0 +1,7 @@
+# Backup folder
+version_backup/
+
+# OS system files
+.DS_Store
+Thumbs.db
+desktop.ini

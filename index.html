@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Cyber Avoid - 추억의 총알 피하기</title>
+    <!-- Google Fonts: Orbitron for futuristic headers, Press Start 2P for retro arcade numbers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&family=Noto+Sans+KR:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- PayPal SDK (개발/테스트 시에는 client-id=sb, 실 결제 Live 전환 시에는 발급된 실서버 Client ID로 교체합니다) -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AeK3dPx2ju4g9zZZtLzdmkRMypHkFmSqtGSy13C00nX35Gx9G32FprXYoX6FH1l44V0OinF5XB1NiZXy&currency=USD&disable-funding=credit,card"></script>
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    
+    <header class="main-header">
+        <h1 class="glow-text">CYBER AVOID</h1>
+        <p class="subtitle">RETRO DODGE GAME</p>
+    </header>
+
+    <div class="arcade-wrapper">
+        <!-- 좌측 패널: 능력치 및 상세 스테이터스 -->
+        <aside class="arcade-sidebar left-panel">
+            <div class="panel-header">STATUS</div>
+            <div class="panel-content">
+                <div class="status-item">
+                    <span class="label">LEVEL</span>
+                    <span id="stat-level" class="value text-cyan">01</span>
+                </div>
+                
+                <div class="status-item">
+                    <span class="label">SHIELD</span>
+                    <div class="bar-container">
+                        <div id="stat-shield-bar" class="bar-fill shield-fill" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="status-item">
+                    <span class="label">SURVIVAL TIME</span>
+                    <div class="time-progress-container">
+                        <div id="stat-time-progress" class="time-progress-bar" style="width: 0%"></div>
+                        <span id="stat-time" class="value small-value">0.0s / 30.0s</span>
+                    </div>
+                </div>
+                
+                <div class="status-divider"></div>
+                
+                <div class="status-item">
+                    <span class="label">SCORE</span>
+                    <span id="stat-score" class="value text-yellow">000000</span>
+                </div>
+                
+                <div class="status-item">
+                    <span class="label">HIGH SCORE</span>
+                    <span id="stat-highscore" class="value text-pink">000000</span>
+                </div>
+
+                <div class="status-item">
+                    <span class="label">COINS</span>
+                    <span id="stat-coins" class="value text-yellow">000000</span>
+                </div>
+                
+                <div class="status-divider"></div>
+                
+                <!-- 명예의 전당 Top 5 순위판 -->
+                <div class="status-item">
+                    <span class="label">TOP 5 PILOTS</span>
+                    <div class="leaderboard-table-container">
+                        <table class="leaderboard-table font-arcade">
+                            <tbody id="hud-leaderboard-body">
+                                <!-- JS에서 동적으로 순위 행 추가 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="radar-box">
+                <div class="radar-circle">
+                    <div class="radar-sweep"></div>
+                    <div class="radar-dot" style="top: 30%; left: 40%"></div>
+                    <div class="radar-dot" style="top: 70%; left: 80%"></div>
+                    <div class="radar-player"></div>
+                </div>
+                <div class="radar-text font-arcade">THREAT RADAR</div>
+            </div>
+        </aside>
+
+        <!-- 중앙 패널: 게임 화면 및 캐비닛 -->
+        <main class="arcade-cabinet">
+            <div class="cabinet-top-neon"></div>
+            
+            <!-- 캔버스 컨테이너 (오버레이 포지셔닝용) -->
+            <div class="canvas-container" id="canvas-container">
+                <canvas id="gameCanvas" width="450" height="750"></canvas>
+                
+                <!-- 시작 오버레이 -->
+                <div id="overlay-start" class="game-overlay active">
+                    <div class="overlay-content">
+                        <h2 class="arcade-title pulse-glow">RETRO DODGE</h2>
+                        <p class="overlay-desc">우주선 세이프가드 프로토콜을 가동하십시오.<br>상공에서 떨어지는 위협을 피하세요.</p>
+                        <button id="btn-start" class="neon-btn font-orbitron">MISSION START</button>
+                        <button id="btn-open-hangar" class="neon-btn btn-pink font-orbitron" style="margin-top: 10px; width: 220px; font-size: 0.8rem; padding: 10px 0;">HANGAR / SHOP</button>
+                    </div>
+                </div>
+
+                <!-- 격납고/상점 오버레이 -->
+                <div id="overlay-hangar" class="game-overlay">
+                    <div class="overlay-content" style="width: 92%; gap: 12px;">
+                        <h2 class="arcade-title text-cyan" style="font-size: 1.15rem; margin-bottom: 2px;">HANGAR & SHOP</h2>
+                        <div class="shop-credits font-orbitron" style="font-size: 0.85rem; letter-spacing: 1.5px;">CREDITS: <span id="shop-coins" class="text-yellow">000000</span> ₵</div>
+                        
+                        <!-- 기체 선택 컨테이너 -->
+                        <div class="ship-select-container">
+                            <div class="ship-card active" data-ship-id="default">
+                                <div class="ship-name">NEO PILOT</div>
+                                <div class="ship-desc">기본형 기체 (평균 능력치)</div>
+                                <div class="ship-specs">SPD: 1.0x | MAG: 40px | HIT: 100%</div>
+                                <button class="btn-ship-action neon-btn-small" data-ship-id="default">EQUIPPED</button>
+                            </div>
+                            <div class="ship-card" data-ship-id="magnet">
+                                <div class="ship-name text-cyan">MAGNET VORTEX</div>
+                                <div class="ship-desc">코인 인력 강화 (파밍 특화)</div>
+                                <div class="ship-specs">SPD: 0.95x | MAG: 130px | HIT: 100%</div>
+                                <button class="btn-ship-action neon-btn-small" data-ship-id="magnet">BUY: 3000₵</button>
+                            </div>
+                            <div class="ship-card" data-ship-id="aegis">
+                                <div class="ship-name text-purple">AEGIS COMMANDER</div>
+                                <div class="ship-desc">실드 용량 증가 (생존 특화)</div>
+                                <div class="ship-specs">SPD: 0.85x | MAG: 30px | HIT: 140%</div>
+                                <button class="btn-ship-action neon-btn-small" data-ship-id="aegis">BUY: 5000₵</button>
+                            </div>
+                            <div class="ship-card" data-ship-id="swift">
+                                <div class="ship-name text-pink">SWIFT RAVEN</div>
+                                <div class="ship-desc">기체 크기 감소 및 속도 증가 (회피 특화)</div>
+                                <div class="ship-specs">SPD: 1.15x | MAG: 40px | HIT: 85%</div>
+                                <button class="btn-ship-action neon-btn-small" data-ship-id="swift">BUY: 8000₵</button>
+                            </div>
+                        </div>
+
+                        <!-- 영구 업그레이드 슬롯 -->
+                        <div class="upgrades-container">
+                            <div class="upgrade-row">
+                                <div class="up-label font-orbitron">SHIELD CAP (+6%/Lv)</div>
+                                <div class="up-status" id="lvl-shieldCap">🟩⬜⬜⬜⬜</div>
+                                <button class="btn-upgrade neon-btn-small" id="btn-up-shieldCap">UP: 500₵</button>
+                            </div>
+                            <div class="upgrade-row">
+                                <div class="up-label font-orbitron">MAGNET RANGE (+20px/Lv)</div>
+                                <div class="up-status" id="lvl-magnetRange">🟩⬜⬜⬜⬜</div>
+                                <button class="btn-upgrade neon-btn-small" id="btn-up-magnetRange">UP: 400₵</button>
+                            </div>
+                            <div class="upgrade-row">
+                                <div class="up-label font-orbitron">SHIELD TIME (+0.5s/Lv)</div>
+                                <div class="up-status" id="lvl-shieldDuration">🟩⬜⬜⬜⬜</div>
+                                <button class="btn-upgrade neon-btn-small" id="btn-up-shieldDuration">UP: 600₵</button>
+                            </div>
+                        </div>
+
+                        <!-- ₵ 코인 결제 충전소 -->
+                        <div class="coin-shop-container">
+                            <div class="shop-title font-orbitron text-pink">CREDIT REFILL SHOP</div>
+                            <div class="package-list">
+                                <!-- 1달러 특화 강조 클래스 pack-starter와 스페셜 뱃지 추가 -->
+                                <div class="package-card pack-starter" data-amount="0.99" data-credits="5000">
+                                    <div class="pack-badge font-orbitron blink-fast">BEST BUY</div>
+                                    <div class="pack-name font-orbitron">STARTER</div>
+                                    <div class="pack-amount text-yellow">5,000₵</div>
+                                    <div class="pack-price">$0.99 USD</div>
+                                </div>
+                                <div class="package-card active" data-amount="1.99" data-credits="12000">
+                                    <div class="pack-name font-orbitron">BOOSTER</div>
+                                    <div class="pack-amount text-cyan">12,000₵</div>
+                                    <div class="pack-price">$1.99 USD</div>
+                                </div>
+                            </div>
+                            <!-- PayPal Smart Buttons Container -->
+                            <div id="paypal-button-container"></div>
+                        </div>
+
+                        <button id="btn-close-hangar" class="neon-btn font-orbitron" style="width: 100%; padding: 8px 0; font-size: 0.8rem; border-color: var(--neon-pink); color: var(--neon-pink); margin-top: 5px;">EXIT HANGAR</button>
+                    </div>
+                </div>
+
+                <!-- 레벨업 오버레이 -->
+                <div id="overlay-levelup" class="game-overlay">
+                    <div class="overlay-content">
+                        <h2 class="arcade-title text-green blink-fast">LEVEL CLEARED!</h2>
+                        <p class="overlay-desc text-cyan">워프 게이트가 안정화되었습니다.<br>다음 레벨로 돌입합니다.</p>
+                        <div class="level-transition-meter">
+                            <div class="warp-beam"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 부활 찬스 오버레이 -->
+                <div id="overlay-revive" class="game-overlay">
+                    <div class="overlay-content" style="gap: 15px;">
+                        <h2 class="arcade-title text-yellow blink-fast" style="font-size: 1.3rem;">EMERGENCY PROTOCOL</h2>
+                        <p class="overlay-desc">함선 격침 위기! 부활 시스템을 작동하시겠습니까?</p>
+                        
+                        <div class="revive-timer font-arcade" id="revive-countdown" style="font-size: 2.2rem; color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); margin: 5px 0;">6</div>
+                        
+                        <button id="btn-revive-ad" class="neon-btn font-orbitron" style="width: 250px; font-size: 0.75rem; padding: 10px 0;">WATCH AD TO REVIVE</button>
+                        <button id="btn-revive-coin" class="neon-btn btn-cyan font-orbitron" style="width: 250px; font-size: 0.75rem; padding: 10px 0; margin-bottom: 5px;">USE 200 COINS</button>
+                        <button id="btn-revive-skip" class="neon-btn-small font-orbitron" style="color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.2); width: 120px;">GIVE UP</button>
+                    </div>
+                </div>
+
+                <!-- 가상 광고 시청 오버레이 -->
+                <div id="overlay-ad-player" class="game-overlay" style="background: #000;">
+                    <div class="ad-screen">
+                        <div class="ad-tv-lines"></div>
+                        <div class="ad-header font-orbitron">★ SPONSORED ADVERTISEMENT ★</div>
+                        <div class="ad-glitch-text font-arcade" data-text="ANTIGRAVITY">ANTIGRAVITY</div>
+                        <div class="ad-desc font-orbitron">"The ultimate AI pair programming software."</div>
+                        <div class="ad-progress-bar-container">
+                            <div class="ad-progress-fill" id="ad-progress-fill"></div>
+                        </div>
+                        <div class="ad-timer font-orbitron" id="ad-timer-text">ADVERTISEMENT ENDS IN 5s</div>
+                    </div>
+                </div>
+
+                <!-- 게임오버 오버레이 -->
+                <div id="overlay-gameover" class="game-overlay">
+                    <div class="overlay-content">
+                        <h2 class="arcade-title text-pink">SHIP DESTROYED</h2>
+                        <div class="score-summary">
+                            <div>FINAL LEVEL: <span id="summary-level" class="text-cyan">1</span></div>
+                            <div>FINAL SCORE: <span id="summary-score" class="text-yellow">000000</span></div>
+                        </div>
+                        
+                        <!-- 파일럿 이름 입력 창 (랭킹용) -->
+                        <div id="ranking-input-box" class="ranking-input-box">
+                            <p class="ranking-prompt font-orbitron text-cyan">REGISTRY OPEN: ENTER PILOT NAME</p>
+                            <input type="text" id="player-name-input" maxlength="8" placeholder="PILOT..." class="cyber-input font-orbitron" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+                            <button id="btn-submit-score" class="neon-btn btn-cyan font-orbitron">SUBMIT SCORE</button>
+                        </div>
+                        
+                        <p id="new-record-banner" class="new-record hidden">★ NEW HIGH SCORE ★</p>
+                        <button id="btn-restart" class="neon-btn btn-pink font-orbitron hidden">RETRY MISSION</button>
+                    </div>
+                </div>
+
+                <!-- 일시정지 오버레이 -->
+                <div id="overlay-paused" class="game-overlay">
+                    <div class="overlay-content">
+                        <h2 class="arcade-title text-yellow">PAUSED</h2>
+                        <p class="overlay-desc">게임이 잠시 정지되었습니다.</p>
+                        <button id="btn-resume" class="neon-btn font-orbitron">RESUME MISSION</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cabinet-speaker-grille">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+        </main>
+
+        <!-- 우측 패널: 조작 방식 및 세팅 -->
+        <aside class="arcade-sidebar right-panel">
+            <div class="panel-header">CONTROLS</div>
+            <div class="panel-content flex-grow">
+                <!-- 조작 모드 토글 -->
+                <div class="control-toggle-box">
+                    <div class="label font-orbitron">CONTROL MODE</div>
+                    <div class="toggle-buttons">
+                        <button id="btn-ctrl-keyboard" class="toggle-btn active">KEYBOARD</button>
+                        <button id="btn-ctrl-mouse" class="toggle-btn">MOUSE</button>
+                    </div>
+                </div>
+
+                <!-- 조작법 카드 -->
+                <div class="help-card" id="help-keyboard">
+                    <div class="help-item">
+                        <div class="key-cap">◀</div>
+                        <div class="key-cap">▲</div>
+                        <div class="key-cap">▼</div>
+                        <div class="key-cap">▶</div>
+                        <span class="help-desc">이동 (방향키)</span>
+                    </div>
+                    <div class="help-item">
+                        <div class="key-cap-wide">W</div>
+                        <div class="key-cap-wide">A</div>
+                        <div class="key-cap-wide">S</div>
+                        <div class="key-cap-wide">D</div>
+                        <span class="help-desc">이동 (대체)</span>
+                    </div>
+                    <div class="help-item">
+                        <div class="key-cap-wide">ESC</div>
+                        <span class="help-desc">일시정지 / 해제</span>
+                    </div>
+                </div>
+
+                <div class="help-card hidden" id="help-mouse">
+                    <div class="help-item">
+                        <div class="mouse-icon">🖱️</div>
+                        <span class="help-desc">게임 캔버스 위에서 마우스를 부드럽게 움직이면 비행기가 즉시 포인터를 따라 이동합니다.</span>
+                    </div>
+                </div>
+
+                <div class="status-divider"></div>
+
+                <!-- 오디오 & 기타 세팅 -->
+                <div class="settings-box">
+                    <div class="label font-orbitron">SYSTEM SETTINGS</div>
+                    <button id="btn-mute" class="neon-btn-small font-orbitron">SOUND: ON</button>
+                </div>
+            </div>
+
+            <div class="credits-box font-arcade">
+                ANTIGRAVITY SYSTEMS V1.0<br>
+                EST. 2026
+            </div>
+        </aside>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="main-footer">
+        <p>© 2026 Retro Cyber Avoid. Inspired by classic BASIC code. Developed with Antigravity.</p>
+    </footer>
+
+    <!-- 게임 스크립트 연결 -->
+    <script src="game.js"></script>
+</body>
+</html>
