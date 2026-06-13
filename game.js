@@ -1497,12 +1497,19 @@ function spawnBulletsLogic() {
         items.push(new ShieldItem(spawnX, -20));
     }
 
-    // 6. Gold Coins Spawner (~4.5 seconds)
-    const coinIntervalTicks = 270;
+    // 6. Gold Coins Spawner (주기를 1.8초로 단축하여 파밍 재미 극대화)
+    const coinIntervalTicks = 110;
     if (coinSpawnTimer >= coinIntervalTicks) {
         coinSpawnTimer = 0;
         const spawnX = 25 + Math.random() * (CANVAS_WIDTH - 50);
         items.push(new CoinItem(spawnX, -20));
+        
+        // 20% 확률로 옆에 보너스 코인 한 개 더 등장 (더블 코인 쾌감!)
+        if (Math.random() < 0.20) {
+            const offset = (Math.random() < 0.5) ? -35 : 35;
+            const bonusX = Math.max(25, Math.min(spawnX + offset, CANVAS_WIDTH - 25));
+            items.push(new CoinItem(bonusX, -40)); // 시간 차를 두고 살짝 위에서 생성
+        }
     }
 }
 
