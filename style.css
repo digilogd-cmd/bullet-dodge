@@ -214,7 +214,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 10;
+    z-index: 20;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1529,7 +1529,7 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 7;
+    z-index: 16;
     box-shadow: 0 0 8px rgba(0, 243, 255, 0.2);
     transition: all 0.2s ease;
     outline: none;
@@ -1767,8 +1767,7 @@ body {
     max-width: 400px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    z-index: 6; /* 캔버스(0)와 일시정지 버튼(7) 사이에 배치 */
+    z-index: 15; /* 캔버스 및 CRT 필터(8)보다 위에 오도록 배치 */
     background: rgba(8, 9, 15, 0.75);
     border: 1.5px solid rgba(0, 243, 255, 0.25);
     box-shadow: 0 0 10px rgba(0, 243, 255, 0.15), inset 0 0 5px rgba(0, 0, 0, 0.5);
