@@ -1551,6 +1551,58 @@ body {
     pointer-events: none;
 }
 
+/* ============================
+   🎮 모바일 인게임 HUD 스타일
+   ============================ */
+.mobile-game-hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;  /* 캔버스 위, 오버레이(100) 아래 */
+    display: none; /* 기본 숨김 - JS로 게임 중에만 표시 */
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 6px 10px;
+    background: linear-gradient(180deg, rgba(5, 8, 20, 0.85) 0%, rgba(5, 8, 20, 0) 100%);
+    pointer-events: none; /* 터치 이벤트 통과 */
+    font-family: 'Orbitron', monospace;
+}
+
+.hud-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 3px 8px;
+}
+
+.hud-label {
+    font-size: 0.6rem;
+    color: rgba(0, 255, 255, 0.7);
+    letter-spacing: 0.05em;
+}
+
+.hud-value {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.05em;
+}
+
+.hud-level .hud-value { color: #ffd700; }
+.hud-shield .hud-value { color: #00ffff; }
+.hud-time .hud-value   { color: #ff6fff; }
+
+/* 오버레이 활성화 시 HUD 숨기기 */
+.canvas-container:has(.game-overlay.active) .mobile-game-hud {
+    display: none !important;
+}
+
 @media (max-width: 480px) {
     .btn-pause-trigger {
         top: 10px;

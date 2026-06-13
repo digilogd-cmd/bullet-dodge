@@ -433,12 +433,6 @@ const domHighScore = document.getElementById('stat-highscore');
 const domCoins = document.getElementById('stat-coins');
 const domHighscoreBanners = document.querySelectorAll('.new-record');
 
-// 인게임 모바일 HUD 엘리먼트 정의
-const overlayInGameHUD = document.getElementById('in-game-hud');
-const domHUDLevel = document.getElementById('hud-level-val');
-const domHUDShieldBar = document.getElementById('hud-shield-bar');
-const domHUDTime = document.getElementById('hud-time-val');
-
 const overlayStart = document.getElementById('overlay-start');
 const overlayLevelup = document.getElementById('overlay-levelup');
 const overlayGameover = document.getElementById('overlay-gameover');
@@ -449,6 +443,18 @@ const overlayAdPlayer = document.getElementById('overlay-ad-player');
 
 const summaryLevel = document.getElementById('summary-level');
 const summaryScore = document.getElementById('summary-score');
+
+// 모바일 인게임 HUD 요소
+const mobileGameHud = document.getElementById('mobile-game-hud');
+const hudLevelVal  = document.getElementById('hud-level-val');
+const hudShieldVal = document.getElementById('hud-shield-val');
+const hudTimeVal   = document.getElementById('hud-time-val');
+
+// 모바일 HUD 표시/숨김 함수
+function showMobileHud(visible) {
+    if (!mobileGameHud) return;
+    mobileGameHud.style.display = visible ? 'flex' : 'none';
+}
 
 // Rankings Database (LocalStorage Top 10)
 let rankings = [];
@@ -1644,6 +1650,7 @@ function advanceLevel() {
 
 function triggerGameOver() {
     gameState = STATE_GAMEOVER;
+    showMobileHud(false); // 📱 게임오버 시 HUD 숨김
     
     triggerShipExplosion();
     SFX.playExplosion();
@@ -1743,6 +1750,9 @@ function gameLoop() {
         
         // Floating texts (+1₵ popup effect)
         updateAndDrawFloatingTexts();
+        
+        // 캔버스 HUD 직접 그리기 (모바일 해상도 왜곡 대응 및 오버레이 가려짐 문제 영구 해결)
+        drawInGameCanvasHUD();
 
     } else if (gameState === STATE_GAMEOVER) {
         updateParticles();
@@ -1819,39 +1829,94 @@ function updateHUD() {
     domHighScore.innerText = String(highScore).padStart(6, '0');
     domCoins.innerText = String(totalCoins + sessionCoins).padStart(6, '0');
 
-    // ==========================================
-    // 🐕 인게임 모바일 HUD 동기화 연동 추가
-    // ==========================================
-    if (overlayInGameHUD) {
-        if (gameState === STATE_PLAYING) {
-            overlayInGameHUD.classList.add('active');
-            
-            if (domHUDLevel) domHUDLevel.innerText = String(level).padStart(2, '0');
-            if (domHUDTime) domHUDTime.innerText = `${survivalTime.toFixed(1)}s`;
-            
-            if (domHUDShieldBar) {
-                if (player && player.isShielded) {
-                    domHUDShieldBar.style.width = '100%';
-                    domHUDShieldBar.style.background = 'linear-gradient(90deg, #00f3ff, #9d00ff)';
-                    domHUDShieldBar.style.boxShadow = '0 0 12px #00f3ff';
-                    domHUDShieldBar.style.animation = 'blink 0.25s infinite alternate';
-                } else {
-                    const percent = player ? (shield / player.maxShield) * 100 : 100;
-                    domHUDShieldBar.style.width = `${percent}%`;
-                    domHUDShieldBar.style.background = 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))';
-                    domHUDShieldBar.style.boxShadow = '0 0 8px var(--neon-cyan)';
-                    
-                    if (percent <= 30) {
-                        domHUDShieldBar.style.animation = 'blink 0.5s infinite alternate';
-                    } else {
-                        domHUDShieldBar.style.animation = 'none';
-                    }
-                }
-            }
-        } else {
-            overlayInGameHUD.classList.remove('active');
+    // 📱 모바일 HUD 실시간 업데이트
+    if (hudLevelVal)  hudLevelVal.innerText  = level;
+    if (hudShieldVal) hudShieldVal.innerText = Math.max(0, Math.ceil(shield));
+    if (hudTimeVal)   hudTimeVal.innerText   = survivalTime.toFixed(1) + 's';
+
+}
+
+// 🐕 2D Canvas 위에 직접 모바일 최적화 HUD(레벨/실드/시간)를 그리는 함수
+function drawInGameCanvasHUD() {
+    ctx.save();
+    
+    // 1. HUD 뒷배경 캡슐 바 (은은한 블랙 투명 캡슐)
+    const hudW = 400;
+    const hudH = 26;
+    const hudX = (CANVAS_WIDTH - hudW) / 2;
+    const hudY = 15;
+    
+    ctx.fillStyle = 'rgba(8, 9, 15, 0.75)';
+    ctx.strokeStyle = 'rgba(0, 243, 255, 0.25)';
+    ctx.lineWidth = 1.5;
+    
+    ctx.beginPath();
+    if (ctx.roundRect) {
+        ctx.roundRect(hudX, hudY, hudW, hudH, 13);
+    } else {
+        ctx.rect(hudX, hudY, hudW, hudH);
+    }
+    ctx.fill();
+    ctx.stroke();
+    
+    // 2. 폰트 및 공통 그림자 설정
+    ctx.font = '700 12px Orbitron, Noto Sans KR, sans-serif';
+    ctx.textBaseline = 'middle';
+    
+    // [좌측] 레벨 표시
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#00f3ff';
+    ctx.fillStyle = '#00f3ff';
+    ctx.textAlign = 'left';
+    ctx.fillText('LV ' + String(level).padStart(2, '0'), hudX + 15, hudY + hudH / 2);
+    
+    // [우측] 생존 시간 표시
+    ctx.shadowColor = '#39ff14';
+    ctx.fillStyle = '#39ff14';
+    ctx.textAlign = 'right';
+    ctx.fillText(survivalTime.toFixed(1) + 's', hudX + hudW - 15, hudY + hudH / 2);
+    
+    // [중앙] 실드 게이지 바
+    const barW = 160;
+    const barH = 6;
+    const barX = hudX + (hudW - barW) / 2;
+    const barY = hudY + (hudH - barH) / 2;
+    
+    // 실드 배경
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.strokeRect(barX, barY, barW, barH);
+    
+    // 실드 채우기 비율
+    const percent = player ? Math.max(0, Math.min(100, (shield / player.maxShield) * 100)) : 100;
+    const fillW = (percent / 100) * barW;
+    
+    if (fillW > 0) {
+        // 실드 그라데이션
+        const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+        grad.addColorStop(0, '#00f3ff');
+        grad.addColorStop(1, '#9d00ff');
+        ctx.fillStyle = grad;
+        
+        // 위급(30% 이하)하거나 무적실드 충전 시 깜빡임(Blink) 피드백
+        let blink = false;
+        if (percent <= 30 && Math.floor(Date.now() / 250) % 2 === 0) {
+            blink = true;
+        }
+        if (player && player.isShielded && Math.floor(Date.now() / 150) % 2 === 0) {
+            blink = true;
+        }
+        
+        if (!blink) {
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00f3ff';
+            ctx.fillRect(barX, barY, fillW, barH);
         }
     }
+    
+    ctx.restore();
 }
 
 // ----------------------------------------------------
@@ -2057,6 +2122,8 @@ function initGame() {
     overlayHangar.classList.remove('active');
     overlayRevive.classList.remove('active');
     overlayAdPlayer.classList.remove('active');
+
+    showMobileHud(true); // 📱 모바일 HUD 표시
 
     gameState = STATE_PLAYING;
     
