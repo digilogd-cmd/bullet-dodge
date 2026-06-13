@@ -118,6 +118,9 @@
                                  try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
                             </script>
                             <div style="position: absolute; color: #333; font-size: 10px; z-index: -1;" class="font-orbitron">GOOGLE ADSENSE (300x100)</div>
+                            <!-- 스킨 장착 시 띄워주는 스페셜 배너 이미지 영역 -->
+                            <img id="lobby-skin-banner-goldie" src="goldie_voyager_skin.png" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; z-index: 10;" alt="Goldie Voyager">
+                            <img id="lobby-skin-banner-buddy" src="cyber_buddy_skin.png" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; z-index: 10;" alt="Cyber Buddy">
                         </div>
                     </div>
                 </div>
@@ -394,7 +397,7 @@
         <p>© 2026 Retro Cyber Avoid. Inspired by classic BASIC code. Developed with Antigravity.</p>
     </footer>
 
-    <!-- 게임 스크립트 연결 -->
-    <script src="game.js"></script>
+    <!-- 게임 스크립트 연결 (캐시 버스팅 연동) -->
+    <script src="game.js?v=2.3"></script>
 </body>
 </html>

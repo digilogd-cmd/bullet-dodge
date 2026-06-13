@@ -1789,6 +1789,25 @@ function updateHUD() {
 // ----------------------------------------------------
 // 12. HANGAR / SHOP DYNAMIC RENDER & CONTROLLERS
 // ----------------------------------------------------
+// 로비 화면 하단의 애드센스 영역에 장착 스킨에 따라 골디/버디 배너 이미지를 띄워주는 함수
+function updateLobbySkinBanner() {
+    const bannerGoldie = document.getElementById('lobby-skin-banner-goldie');
+    const bannerBuddy = document.getElementById('lobby-skin-banner-buddy');
+    if (!bannerGoldie || !bannerBuddy) return;
+
+    const activeShip = localStorage.getItem('cyber_avoid_active_ship') || 'default';
+    
+    // 초기화
+    bannerGoldie.style.display = 'none';
+    bannerBuddy.style.display = 'none';
+    
+    if (activeShip === 'goldie') {
+        bannerGoldie.style.display = 'block';
+    } else if (activeShip === 'buddy') {
+        bannerBuddy.style.display = 'block';
+    }
+}
+
 function updateHangarUI() {
     // 1. Credits display
     document.getElementById('shop-coins').innerText = String(totalCoins).padStart(6, '0');
@@ -1854,6 +1873,9 @@ function updateHangarUI() {
             btn.style.opacity = '1';
         }
     });
+    
+    // 장착 스킨에 따라 로비 배너 이미지 노출/숨김 업데이트
+    updateLobbySkinBanner();
 }
 
 function handleShipAction(shipId) {
@@ -2449,4 +2471,5 @@ window.addEventListener('deviceorientation', (e) => {
 loadRankings();
 initStars();
 initPayPal();
+updateLobbySkinBanner(); // 초기 실행 시 장착 스킨 배너 반영
 requestAnimationFrame(gameLoop);
