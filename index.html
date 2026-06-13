@@ -13,6 +13,8 @@
     <script src="https://www.paypal.com/sdk/js?client-id=AeK3dPx2ju4g9zZZtLzdmkRMypHkFmSqtGSy13C00nX35Gx9G32FprXYoX6FH1l44V0OinF5XB1NiZXy&currency=USD&disable-funding=credit,card"></script>
     <!-- Portone SDK (국내 카드 및 간편결제 연동용) -->
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+    <!-- 구글 애드센스 공식 연동 스크립트 (대표님의 ca-pub ID로 대체해서 사용 가능) -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXX" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="cyber-grid"></div>
@@ -102,9 +104,21 @@
                 <div id="overlay-start" class="game-overlay active">
                     <div class="overlay-content">
                         <h2 class="arcade-title pulse-glow">RETRO DODGE</h2>
-                        <p class="overlay-desc">우주선 세이프가드 프로토콜을 가동하십시오.<br>상공에서 떨어지는 위협을 피하세요.</p>
+                        <p class="overlay-desc">총알을 피해 살아남으십시오.<br>코인을 모아 기체를 업그레이드하세요.</p>
                         <button id="btn-start" class="neon-btn font-orbitron">MISSION START</button>
                         <button id="btn-open-hangar" class="neon-btn btn-pink font-orbitron" style="margin-top: 10px; width: 220px; font-size: 0.8rem; padding: 10px 0;">HANGAR / SHOP</button>
+                        
+                        <!-- 시작 화면 하단 구글 애드센스 광고 (디스플레이 300x100) -->
+                        <div class="adsense-start" style="width: 300px; height: 100px; margin: 15px auto 0 auto; background: #111; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--neon-cyan); position: relative; overflow: hidden; border-radius: 4px;">
+                            <ins class="adsbygoogle"
+                                 style="display:inline-block;width:300px;height:100px"
+                                 data-ad-client="ca-pub-XXXXXXXXXXXXX"
+                                 data-ad-slot="WWWWWWWWWWWW"></ins>
+                            <script>
+                                 try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+                            </script>
+                            <div style="position: absolute; color: #333; font-size: 10px; z-index: -1;" class="font-orbitron">GOOGLE ADSENSE (300x100)</div>
+                        </div>
                     </div>
                 </div>
 
@@ -228,17 +242,34 @@
                     </div>
                 </div>
 
-                <!-- 가상 광고 시청 오버레이 -->
-                <div id="overlay-ad-player" class="game-overlay" style="background: #000;">
+                <!-- 광고 시청창 (구글 애드센스 연동형) -->
+                <div id="overlay-ad-player" class="game-overlay" style="background: rgba(0, 0, 0, 0.95);">
                     <div class="ad-screen">
                         <div class="ad-tv-lines"></div>
-                        <div class="ad-header font-orbitron">★ SPONSORED ADVERTISEMENT ★</div>
-                        <div class="ad-glitch-text font-arcade" data-text="ANTIGRAVITY">ANTIGRAVITY</div>
-                        <div class="ad-desc font-orbitron">"The ultimate AI pair programming software."</div>
-                        <div class="ad-progress-bar-container">
+                        <div class="ad-header font-orbitron" style="color: var(--neon-cyan); letter-spacing: 2px;">★ SPONSORED ADVERTISEMENT ★</div>
+                        
+                        <!-- 구글 애드센스 300x250 사각형 배너 광고 영역 -->
+                        <!-- 대표님! 구글 애드센스 승인 완료 후 아래의 ca-pub-XXXXX 와 data-ad-slot-YYYYY 를 대표님의 애드센스 정보로 치환해주시면 광고가 정상 노출됩니다! -->
+                        <div class="adsense-container" style="width: 300px; height: 250px; margin: 20px auto; background: #111; display: flex; align-items: center; justify-content: center; border: 2px solid var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); position: relative; border-radius: 4px;">
+                            <ins class="adsbygoogle"
+                                 style="display:inline-block;width:300px;height:250px"
+                                 data-ad-client="ca-pub-XXXXXXXXXXXXX"
+                                 data-ad-slot="YYYYYYYYYYYY"
+                                 data-ad-format="auto"
+                                 data-full-width-responsive="false"></ins>
+                            <script>
+                                 try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) { console.error('AdSense load fail:', e); }
+                            </script>
+                            <div style="position: absolute; color: #444; font-size: 11px; z-index: -1;" class="font-orbitron">GOOGLE ADSENSE BANNER (300x250)</div>
+                        </div>
+
+                        <div class="ad-progress-bar-container" style="width: 300px; margin: 10px auto;">
                             <div class="ad-progress-fill" id="ad-progress-fill"></div>
                         </div>
-                        <div class="ad-timer font-orbitron" id="ad-timer-text">ADVERTISEMENT ENDS IN 5s</div>
+                        <div class="ad-timer font-orbitron" id="ad-timer-text" style="color: var(--neon-pink); font-size: 13px;">ADVERTISEMENT ENDS IN 5s</div>
+                        
+                        <!-- 5초 후에 활성화되는 스킵/부활 완료 버튼 -->
+                        <button id="btn-ad-skip" class="neon-btn font-orbitron hidden" style="margin: 15px auto 0 auto; width: 220px; font-size: 0.8rem; padding: 10px 0; display: block;">SKIP AD & REVIVE 🚀</button>
                     </div>
                 </div>
 
@@ -260,6 +291,18 @@
                         
                         <p id="new-record-banner" class="new-record hidden">★ NEW HIGH SCORE ★</p>
                         <button id="btn-restart" class="neon-btn btn-pink font-orbitron hidden">RETRY MISSION</button>
+                        
+                        <!-- 게임 오버 하단 구글 애드센스 광고 (디스플레이 300x120) -->
+                        <div class="adsense-gameover" style="width: 300px; height: 120px; margin: 15px auto 0 auto; background: #111; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--neon-pink); position: relative; overflow: hidden; border-radius: 4px;">
+                            <ins class="adsbygoogle"
+                                 style="display:inline-block;width:300px;height:120px"
+                                 data-ad-client="ca-pub-XXXXXXXXXXXXX"
+                                 data-ad-slot="ZZZZZZZZZZZZ"></ins>
+                            <script>
+                                 try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+                            </script>
+                            <div style="position: absolute; color: #333; font-size: 10px; z-index: -1;" class="font-orbitron">GOOGLE ADSENSE (300x120)</div>
+                        </div>
                     </div>
                 </div>
 
@@ -268,7 +311,8 @@
                     <div class="overlay-content">
                         <h2 class="arcade-title text-yellow">PAUSED</h2>
                         <p class="overlay-desc">게임이 잠시 정지되었습니다.</p>
-                        <button id="btn-resume" class="neon-btn font-orbitron">RESUME MISSION</button>
+                        <button id="btn-resume" class="neon-btn font-orbitron" style="margin-bottom: 12px;">RESUME MISSION</button>
+                        <button id="btn-quit" class="neon-btn font-orbitron btn-pink">QUIT MISSION</button>
                     </div>
                 </div>
             </div>
@@ -289,6 +333,7 @@
                     <div class="toggle-buttons">
                         <button id="btn-ctrl-keyboard" class="toggle-btn active">KEYBOARD</button>
                         <button id="btn-ctrl-mouse" class="toggle-btn">MOUSE</button>
+                        <button id="btn-ctrl-tilt" class="toggle-btn">TILT</button>
                     </div>
                 </div>
 
@@ -318,6 +363,13 @@
                     <div class="help-item">
                         <div class="mouse-icon">🖱️</div>
                         <span class="help-desc">게임 캔버스 위에서 마우스를 부드럽게 움직이면 비행기가 즉시 포인터를 따라 이동합니다.</span>
+                    </div>
+                </div>
+
+                <div class="help-card hidden" id="help-tilt">
+                    <div class="help-item" style="text-align: center; display: block;">
+                        <div class="gyro-icon" style="font-size: 28px; margin-bottom: 8px;">📱🔄</div>
+                        <span class="help-desc" style="font-size: 11px; line-height: 1.4; display: block; color: var(--neon-cyan);">스마트폰을 상하좌우로 기울이면 비행기가 그 방향으로 부드럽게 비행합니다. (기본 파지각 45도 기준)</span>
                     </div>
                 </div>
 

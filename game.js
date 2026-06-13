@@ -374,6 +374,8 @@ const LEVEL_DURATION = 30.0;
 let controlMode = 'keyboard';
 let keys = {};
 let mousePos = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT * 0.75 };
+let tiltX = 0; // -1 to 1
+let tiltY = 0; // -1 to 1
 
 // Economy & Database V2
 let totalCoins = parseInt(localStorage.getItem('cyber_avoid_coins')) || 0;
@@ -586,6 +588,22 @@ class Player {
                 ay *= 0.7071;
             }
 
+            this.vx += ax;
+            this.vy += ay;
+            
+            this.vx *= this.friction;
+            this.vy *= this.friction;
+
+            this.vx = Math.min(Math.max(this.vx, -this.maxSpeed), this.maxSpeed);
+            this.vy = Math.min(Math.max(this.vy, -this.maxSpeed), this.maxSpeed);
+
+            this.x += this.vx;
+            this.y += this.vy;
+        } else if (controlMode === 'tilt') {
+            // TILT CONTROL: 스마트폰 센서값 기반 무빙 (감도 보정 1.6배)
+            let ax = tiltX * this.speed * 1.6;
+            let ay = tiltY * this.speed * 1.6;
+            
             this.vx += ax;
             this.vy += ay;
             
@@ -1530,6 +1548,12 @@ function completeRevive() {
     overlayRevive.classList.remove('active');
     overlayAdPlayer.classList.remove('active');
     
+    // 광고 스킵 버튼 초기화(숨김)
+    const btnAdSkip = document.getElementById('btn-ad-skip');
+    if (btnAdSkip) {
+        btnAdSkip.classList.add('hidden');
+    }
+    
     // Restore player state
     shield = player.maxShield;
     bullets = [];
@@ -1712,11 +1736,17 @@ function gameLoop() {
         if (adProgress > 1.0) adProgress = 1.0;
 
         document.getElementById('ad-progress-fill').style.width = `${adProgress * 100}%`;
-        const timeRemainingSecs = Math.max(0, Math.ceil(5 - adProgress * 5));
-        document.getElementById('ad-timer-text').innerText = `ADVERTISEMENT ENDS IN ${timeRemainingSecs}s`;
-
-        if (adProgress >= 1.0) {
-            completeRevive();
+        if (adProgress < 1.0) {
+            const timeRemainingSecs = Math.max(0, Math.ceil(5 - adProgress * 5));
+            document.getElementById('ad-timer-text').innerText = `ADVERTISEMENT ENDS IN ${timeRemainingSecs}s`;
+        } else {
+            document.getElementById('ad-timer-text').innerText = `ADVERTISEMENT ENDED`;
+            
+            // 5초 광고 시청 완료 시 수동 부활 스킵 버튼 노출
+            const btnAdSkip = document.getElementById('btn-ad-skip');
+            if (btnAdSkip) {
+                btnAdSkip.classList.remove('hidden');
+            }
         }
     }
 
@@ -2161,29 +2191,77 @@ document.getElementById('btn-revive-skip').addEventListener('click', () => {
     skipRevive();
 });
 
-// Control System Toggles (Keyboard vs Mouse)
+// Control System Toggles (Keyboard vs Mouse vs Tilt)
 const btnCtrlKeyboard = document.getElementById('btn-ctrl-keyboard');
 const btnCtrlMouse = document.getElementById('btn-ctrl-mouse');
+const btnCtrlTilt = document.getElementById('btn-ctrl-tilt');
 const helpKeyboard = document.getElementById('help-keyboard');
 const helpMouse = document.getElementById('help-mouse');
+const helpTilt = document.getElementById('help-tilt');
 
-btnCtrlKeyboard.addEventListener('click', () => {
-    SFX.playBeep();
-    controlMode = 'keyboard';
-    btnCtrlKeyboard.classList.add('active');
-    btnCtrlMouse.classList.remove('active');
-    helpKeyboard.classList.remove('hidden');
-    helpMouse.classList.add('hidden');
-});
+function updateControlModeUI() {
+    if (btnCtrlKeyboard) btnCtrlKeyboard.classList.remove('active');
+    if (btnCtrlMouse) btnCtrlMouse.classList.remove('active');
+    if (btnCtrlTilt) btnCtrlTilt.classList.remove('active');
+    
+    if (helpKeyboard) helpKeyboard.classList.add('hidden');
+    if (helpMouse) helpMouse.classList.add('hidden');
+    if (helpTilt) helpTilt.classList.add('hidden');
+    
+    if (controlMode === 'keyboard') {
+        if (btnCtrlKeyboard) btnCtrlKeyboard.classList.add('active');
+        if (helpKeyboard) helpKeyboard.classList.remove('hidden');
+    } else if (controlMode === 'mouse') {
+        if (btnCtrlMouse) btnCtrlMouse.classList.add('active');
+        if (helpMouse) helpMouse.classList.remove('hidden');
+    } else if (controlMode === 'tilt') {
+        if (btnCtrlTilt) btnCtrlTilt.classList.add('active');
+        if (helpTilt) helpTilt.classList.remove('hidden');
+    }
+}
 
-btnCtrlMouse.addEventListener('click', () => {
-    SFX.playBeep();
-    controlMode = 'mouse';
-    btnCtrlMouse.classList.add('active');
-    btnCtrlKeyboard.classList.remove('active');
-    helpMouse.classList.remove('hidden');
-    helpKeyboard.classList.add('hidden');
-});
+if (btnCtrlKeyboard) {
+    btnCtrlKeyboard.addEventListener('click', () => {
+        SFX.playBeep();
+        controlMode = 'keyboard';
+        updateControlModeUI();
+    });
+}
+
+if (btnCtrlMouse) {
+    btnCtrlMouse.addEventListener('click', () => {
+        SFX.playBeep();
+        controlMode = 'mouse';
+        updateControlModeUI();
+    });
+}
+
+if (btnCtrlTilt) {
+    btnCtrlTilt.addEventListener('click', () => {
+        SFX.playBeep();
+        controlMode = 'tilt';
+        updateControlModeUI();
+        enableTiltControl();
+    });
+}
+
+function enableTiltControl() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === 'granted') {
+                    console.log('DeviceOrientation permission granted.');
+                } else {
+                    alert('자이로 센서 권한이 거부되었습니다. 원활한 플레이를 위해 센서 권한을 허용해주세요.');
+                    controlMode = 'keyboard';
+                    updateControlModeUI();
+                }
+            })
+            .catch(err => {
+                console.error('DeviceOrientation permission request error:', err);
+            });
+    }
+}
 
 // 국내 결제 버튼 클릭 리스너 연결
 document.getElementById('btn-portone-pay').addEventListener('click', () => {
@@ -2212,12 +2290,48 @@ document.getElementById('btn-restart').addEventListener('click', () => {
     initGame();
 });
 
-document.getElementById('btn-resume').addEventListener('click', () => {
-    SFX.playBeep();
-    gameState = STATE_PLAYING;
-    overlayPaused.classList.remove('active');
-    SFX.resumeBGM();
-});
+const btnResume = document.getElementById('btn-resume');
+if (btnResume) {
+    btnResume.addEventListener('click', () => {
+        SFX.playBeep();
+        gameState = STATE_PLAYING;
+        overlayPaused.classList.remove('active');
+        SFX.resumeBGM();
+    });
+}
+
+// ESC / PAUSE 화면에서 게임을 완전히 종료하고 메인 화면으로 돌아가는 버튼
+const btnQuit = document.getElementById('btn-quit');
+if (btnQuit) {
+    btnQuit.addEventListener('click', () => {
+        SFX.playBeep();
+        gameState = STATE_START;
+        overlayPaused.classList.remove('active');
+        overlayStart.classList.add('active');
+        
+        // 게임 진행 정보 및 BGM 정지
+        SFX.stopBGM();
+        
+        // 엔티티 및 리소스 클리어
+        bullets = [];
+        particles = [];
+        items = [];
+        warningLines = [];
+        floatingTexts = [];
+        
+        // Hangar UI 및 코인 데이터 동기화
+        updateHangarUI();
+    });
+}
+
+// 애드센스 광고 시청 완료 후 부활 완료 처리하는 리스너
+const btnAdSkip = document.getElementById('btn-ad-skip');
+if (btnAdSkip) {
+    btnAdSkip.addEventListener('click', () => {
+        SFX.playBeep();
+        completeRevive();
+    });
+}
 
 // 파일럿 점수 등록 처리
 const btnSubmitScore = document.getElementById('btn-submit-score');
@@ -2315,6 +2429,21 @@ canvas.addEventListener('touchmove', (e) => {
     mousePos.x = (e.touches[0].clientX - rect.left) * scaleX;
     mousePos.y = (e.touches[0].clientY - rect.top) * scaleY;
 }, { passive: false });
+
+// 스마트폰 기울기 센서 이벤트 리스너 (TILT CONTROL)
+window.addEventListener('deviceorientation', (e) => {
+    if (controlMode !== 'tilt') return;
+    
+    // e.gamma: 좌우 기울기 (-90 ~ 90). 스마트폰을 오른편으로 기울이면 +, 왼편은 -
+    // e.beta: 앞뒤 기울기 (-180 ~ 180). 스마트폰을 세울수록 +, 눕힐수록 -
+    // 기본적으로 스마트폰을 쥐고 게임을 바라보는 평균 각도인 45도를 중립점(neutral)으로 삼습니다.
+    const targetBeta = 45;
+    const diffBeta = e.beta - targetBeta;
+    
+    // 감도 임계값 보정 (-15도 ~ 15도 범위를 -1 ~ 1로 정규화)
+    tiltX = Math.min(Math.max(e.gamma / 15, -1), 1);
+    tiltY = Math.min(Math.max(diffBeta / 15, -1), 1);
+});
 
 // Init backgrounds & load pilot rankings & PayPal
 loadRankings();

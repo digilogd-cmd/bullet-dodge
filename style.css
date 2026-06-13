@@ -1338,3 +1338,29 @@ body {
         box-shadow: 0 0 16px rgba(255, 251, 0, 0.6), inset 0 0 8px rgba(255, 251, 0, 0.2), 0 0 10px rgba(255, 0, 127, 0.15);
     }
 }
+
+/* 🐕 격납고 기체 선택 영역 스크롤 오버라이드 (결제 영역 가시성 확보) */
+.ship-select-container {
+    max-height: 180px;  /* 고정 높이 부여하여 압축 */
+    overflow-y: auto;   /* 내부 스크롤 활성화 */
+    padding-right: 6px;
+    margin-bottom: 5px;
+}
+
+/* 스크롤바 레트로 디자인 최적화 */
+.ship-select-container::-webkit-scrollbar {
+    width: 6px;
+}
+.ship-select-container::-webkit-scrollbar-track {
+    background: rgba(8, 9, 15, 0.5);
+    border-radius: 3px;
+}
+.ship-select-container::-webkit-scrollbar-thumb {
+    background: var(--neon-cyan);
+    border-radius: 3px;
+    box-shadow: 0 0 6px var(--neon-cyan);
+}
+.ship-select-container::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-pink);
+    box-shadow: 0 0 10px var(--neon-pink);
+}
