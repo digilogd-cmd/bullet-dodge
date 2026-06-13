@@ -1559,6 +1559,137 @@ body {
         height: 42px;
         font-size: 1.1rem;
     }
+
+    /* 🐕 모바일 환경 상점/격납고 오버레이 극한 최적화 (짤림 방지 및 터치 스크롤 복구) */
+    #overlay-hangar .overlay-content {
+        gap: 6px !important;       /* 요소 간 간격 극대화 축소 */
+        padding: 10px 5px !important;
+        max-height: 98% !important; /* 가용 공간 극대화 */
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important; /* iOS 모바일 부드러운 스크롤 강제 */
+    }
+
+    #overlay-hangar .arcade-title {
+        font-size: 0.95rem !important;
+        margin-bottom: 0px !important;
+    }
+
+    #overlay-hangar .shop-credits {
+        font-size: 0.75rem !important;
+        padding: 3px 12px !important;
+        margin-bottom: 0px !important;
+    }
+
+    /* 기체 선택 가로 스크롤 영역 모바일 축소 */
+    .ship-select-container {
+        max-height: 110px !important; /* 모바일에서는 높이를 대폭 줄여서 상하 공간 확보 */
+        margin-bottom: 4px !important;
+    }
+
+    .ship-card {
+        flex: 0 0 115px !important; /* 카드 너비를 115px로 더 콤팩트하게 */
+        min-height: 100px !important;
+        padding: 6px 4px !important;
+        gap: 3px !important;
+    }
+
+    .ship-name {
+        font-size: 0.6rem !important;
+    }
+
+    .ship-desc {
+        font-size: 0.45rem !important;
+        line-height: 1.1 !important;
+    }
+
+    .ship-specs {
+        font-size: 0.42rem !important;
+    }
+
+    .btn-ship-action {
+        font-size: 0.5rem !important;
+        padding: 3px 0 !important;
+    }
+
+    /* 업그레이드 슬롯 모바일 축소 */
+    .upgrades-container {
+        gap: 4px !important;
+        padding: 6px !important;
+    }
+
+    .upgrade-row {
+        gap: 4px !important;
+    }
+
+    .up-label {
+        font-size: 0.48rem !important;
+    }
+
+    .up-status {
+        font-size: 0.52rem !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .btn-upgrade {
+        font-size: 0.48rem !important;
+        padding: 2px 0 !important;
+    }
+
+    /* 결제 충전소 모바일 축소 */
+    .coin-shop-container {
+        padding: 8px 6px 6px 6px !important;
+        gap: 6px !important;
+        margin-top: 4px !important;
+        border-radius: 8px !important;
+    }
+
+    .shop-title {
+        font-size: 0.52rem !important;
+    }
+
+    .package-list {
+        gap: 6px !important;
+    }
+
+    .package-card {
+        padding: 8px 4px !important;
+        gap: 2px !important;
+        border-radius: 6px !important;
+    }
+
+    .pack-badge {
+        font-size: 0.38rem !important;
+        padding: 1px 4px !important;
+    }
+
+    .pack-name {
+        font-size: 0.45rem !important;
+    }
+
+    .pack-amount {
+        font-size: 0.7rem !important;
+    }
+
+    .pack-price {
+        font-size: 0.5rem !important;
+    }
+
+    #btn-portone-pay {
+        font-size: 0.62rem !important;
+        padding: 6px 0 !important;
+        margin-top: 2px !important;
+    }
+
+    #paypal-button-container {
+        margin-top: 2px !important;
+        padding: 2px !important;
+    }
+
+    #btn-close-hangar {
+        padding: 6px 0 !important;
+        font-size: 0.7rem !important;
+        margin-top: 2px !important;
+    }
 }
 
 /* 로비 광고/배너 컨테이너 (정밀 가운데 정렬 및 네온 보더) */

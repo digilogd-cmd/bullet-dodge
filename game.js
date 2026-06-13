@@ -371,7 +371,15 @@ let shield = 100;
 let survivalTime = 0.0;
 const LEVEL_DURATION = 30.0;
 
-let controlMode = 'keyboard';
+// 모바일 디바이스 감지 함수 (UserAgent 및 터치 지원 여부 체크)
+function isMobileDevice() {
+    return (
+        /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)
+    );
+}
+
+let controlMode = isMobileDevice() ? 'tilt' : 'keyboard';
 let keys = {};
 let mousePos = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT * 0.75 };
 let tiltX = 0; // -1 to 1
