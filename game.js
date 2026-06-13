@@ -1413,6 +1413,11 @@ function checkCollisions() {
             shield -= 18;
             player.damageFlash = 8;
             
+            // 모바일 햅틱 진동 피드백 (짧게 두 번 징-징!)
+            if (navigator.vibrate) {
+                navigator.vibrate([80, 50, 80]);
+            }
+            
             for (let s = 0; s < 12; s++) {
                 const sa = Math.random() * Math.PI * 2;
                 const spd = 2 + Math.random() * 4;
@@ -1517,6 +1522,11 @@ function spawnBulletsLogic() {
 // 9. V2 REVIVE / ADVERTISING CONTROLLER
 // ----------------------------------------------------
 function handlePlayerDeath() {
+    // 모바일 햅틱 진동 피드백 (함선 격침 폭발: 크고 묵직하게 징~~~)
+    if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 400]);
+    }
+
     if (reviveUsed) {
         // Already revived once, proceed to gameover directly
         triggerGameOver();
