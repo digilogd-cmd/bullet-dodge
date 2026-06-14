@@ -2216,7 +2216,7 @@ packageCards.forEach(card => {
 });
 
 // Portone 국내 간편 결제 요청 처리 (비동기)
-async function requestPortonePayment() {
+async function requestPortonePayment(targetChannelKey) {
     if (typeof PortOne === 'undefined') {
         console.error("PortOne SDK를 로드할 수 없습니다.");
         alert("국내 결제 모듈 로드 실패. 새로고침 후 다시 시도해 주세요.");
@@ -2236,7 +2236,7 @@ async function requestPortonePayment() {
             orderName: `Cyber Avoid Credits - ${selectedPackagePrice === '0.99' ? 'STARTER' : 'BOOSTER'}`,
             totalAmount: amountKRW,
             currency: "CURRENCY_KRW",
-            channelKey: "channel-key-8c83efa9-2297-407f-9f09-576ca66e0639", // 토스페이먼츠 채널 키
+            channelKey: targetChannelKey,
             payMethod: "EASY_PAY"
         });
         
@@ -2460,10 +2460,16 @@ function enableTiltControl() {
     }
 }
 
-// 국내 결제 버튼 클릭 리스너 연결
-document.getElementById('btn-portone-pay').addEventListener('click', () => {
+// 카카오페이 결제 버튼 클릭 리스너 연결
+document.getElementById('btn-kakaopay')?.addEventListener('click', () => {
     SFX.playBeep();
-    requestPortonePayment();
+    requestPortonePayment("channel-key-eabcf03a-193b-4af1-888e-c3be6852716d"); // 카카오페이 채널 키
+});
+
+// 토스페이먼츠 결제 버튼 클릭 리스너 연결
+document.getElementById('btn-tosspay')?.addEventListener('click', () => {
+    SFX.playBeep();
+    requestPortonePayment("channel-key-8c83efa9-2297-407f-9f09-576ca66e0639"); // 토스페이먼츠 채널 키
 });
 
 // Sound toggling
