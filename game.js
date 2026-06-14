@@ -2215,67 +2215,59 @@ packageCards.forEach(card => {
     });
 });
 
-// Toss Payments 간편결제 요청 처리 (리다이렉트 방식)
-function requestTossPayment() {
-    if (typeof TossPayments === 'undefined') {
-        console.error("Toss Payments SDK를 로드할 수 없습니다.");
-        alert("결제 모듈 로드 실패. 새로고침 후 다시 시도해 주세요.");
+// Portone 국내 간편 결제 요청 처리 (비동기)
+async function requestPortonePayment() {
+    if (typeof PortOne === 'undefined') {
+        console.error("PortOne SDK를 로드할 수 없습니다.");
+        alert("국내 결제 모듈 로드 실패. 새로고침 후 다시 시도해 주세요.");
         return;
     }
     
     const addedCredits = selectedPackageCredits;
-    const amountKRW = Math.round(parseFloat(selectedPackagePrice) * 1300); // 달러를 원화로 임의 환산
-    
-    // 대표님의 토스페이먼츠 테스트 클라이언트 키 (발급 전까지는 임시 키 사용)
-    const clientKey = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
-    const tossPayments = TossPayments(clientKey);
-    
-    const orderId = `order-${Date.now()}`;
-    // 결제 완료 후 돌아올 URL에 파라미터 추가
-    const successUrl = window.location.origin + window.location.pathname + `?toss=success&credits=${addedCredits}`;
-    const failUrl = window.location.origin + window.location.pathname + `?toss=fail`;
+    const amountKRW = Math.round(parseFloat(selectedPackagePrice) * 1300); // 0.99달러 -> 약 1300원 환산
     
     try {
-        tossPayments.requestPayment('카드', {
-            amount: amountKRW,
-            orderId: orderId,
+        const paymentId = `payment-${Date.now()}`;
+        
+        // 포트원 V2 결제창 호출
+        const response = await PortOne.requestPayment({
+            storeId: "store-8e0da90f-9f03-42e5-bf5f-d57cdf90425a", // 대표님의 가맹점 식별코드
+            paymentId: paymentId,
             orderName: `Cyber Avoid Credits - ${selectedPackagePrice === '0.99' ? 'STARTER' : 'BOOSTER'}`,
-            successUrl: successUrl,
-            failUrl: failUrl
+            totalAmount: amountKRW,
+            currency: "CURRENCY_KRW",
+            channelKey: "channel-key-eabcf03a-193b-4af1-888e-c3be6852716d", // 대표님이 발급받으실 테스트 채널 키
+            payMethod: "EASY_PAY"
         });
+        
+        // 결제 실패 처리
+        if (response.code !== undefined) {
+            console.error("포트원 결제 실패:", response.message);
+            SFX.playGraze();
+            alert(`결제 실패: ${response.message}`);
+            return;
+        }
+        
+        // 결제 성공 시 재화 지급 및 동기화
+        totalCoins += addedCredits;
+        localStorage.setItem('cyber_avoid_coins', totalCoins);
+        
+        // UI 및 HUD 즉시 동기화
+        updateHangarUI();
+        domCoins.innerText = String(totalCoins + sessionCoins).padStart(6, '0');
+        
+        // 사운드 및 플로팅 이펙트
+        SFX.playLevelWarp();
+        spawnFloatingText(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, `+${addedCredits}₵ PURCHASED!`);
+        
+        alert(`결제가 완료되었습니다! ${addedCredits.toLocaleString()}₵ 코인이 정상 지급되었습니다.`);
+        
     } catch (err) {
-        console.error("토스페이먼츠 호출 중 에러:", err);
-        if(typeof SFX !== 'undefined') SFX.playGraze();
-        alert("결제창 호출 중 오류가 발생했습니다.");
+        console.error("포트원 결제 중 오류 발생:", err);
+        SFX.playGraze();
+        alert("결제 처리 중 예상치 못한 에러가 발생했습니다.");
     }
 }
-
-// 창 로드 시 토스페이먼츠 리다이렉트 결과 처리
-window.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('toss') === 'success') {
-        const addedCredits = parseInt(urlParams.get('credits'), 10) || 0;
-        if (addedCredits > 0) {
-            // 결제 성공 시 재화 지급 및 동기화
-            let currentCoins = parseInt(localStorage.getItem('cyber_avoid_coins')) || 0;
-            currentCoins += addedCredits;
-            localStorage.setItem('cyber_avoid_coins', currentCoins);
-            totalCoins = currentCoins; // 전역 변수 동기화
-            
-            setTimeout(() => {
-                alert(`결제가 완료되었습니다! ${addedCredits.toLocaleString()}₵ 코인이 정상 지급되었습니다.`);
-                window.history.replaceState({}, document.title, window.location.pathname);
-                if(typeof updateHangarUI === 'function') updateHangarUI();
-                if(typeof domCoins !== 'undefined') domCoins.innerText = String(totalCoins).padStart(6, '0');
-            }, 500);
-        }
-    } else if (urlParams.get('toss') === 'fail') {
-        setTimeout(() => {
-            alert("결제가 취소되었거나 실패했습니다.");
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }, 500);
-    }
-});
 
 // PayPal Smart Buttons SDK 초기화 및 예외 강화 버전
 function initPayPal() {
@@ -2468,10 +2460,10 @@ function enableTiltControl() {
     }
 }
 
-// 토스페이먼츠 결제 버튼 클릭 리스너 연결
-document.getElementById('btn-toss-pay').addEventListener('click', () => {
+// 국내 결제 버튼 클릭 리스너 연결
+document.getElementById('btn-portone-pay').addEventListener('click', () => {
     SFX.playBeep();
-    requestTossPayment();
+    requestPortonePayment();
 });
 
 // Sound toggling
