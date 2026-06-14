@@ -2236,7 +2236,7 @@ async function requestPortonePayment() {
             orderName: `Cyber Avoid Credits - ${selectedPackagePrice === '0.99' ? 'STARTER' : 'BOOSTER'}`,
             totalAmount: amountKRW,
             currency: "CURRENCY_KRW",
-            channelKey: "channel-key-eabcf03a-193b-4af1-888e-c3be6852716d", // 대표님이 발급받으실 테스트 채널 키
+            channelKey: "channel-key-8c83efa9-2297-407f-9f09-576ca66e0639", // 토스페이먼츠 채널 키
             payMethod: "EASY_PAY"
         });
         
