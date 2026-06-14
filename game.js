@@ -2641,8 +2641,8 @@ window.addEventListener('deviceorientation', (e) => {
     
     // e.gamma: 좌우 기울기 (-90 ~ 90). 스마트폰을 오른편으로 기울이면 +, 왼편은 -
     // e.beta: 앞뒤 기울기 (-180 ~ 180). 스마트폰을 세울수록 +, 눕힐수록 -
-    // 기본적으로 스마트폰을 쥐고 게임을 바라보는 평균 각도인 45도를 중립점(neutral)으로 삼습니다.
-    const targetBeta = 45;
+    // 스마트폰을 들고 바라보는 기본 각도 20도를 중립(neutral)으로 함. (대표님 요청)
+    const targetBeta = 20;
     const diffBeta = e.beta - targetBeta;
     
     // 감도 임계값 보정 (-15도 ~ 15도 범위를 -1 ~ 1로 정규화)
