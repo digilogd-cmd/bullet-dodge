@@ -1,26 +1,26 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 캐시 방지 헤더 추가로 모바일 브라우저 최신화 강제 -->
+    <!-- 罹먯떆 諛⑹? ?ㅻ뜑 異붽?濡?紐⑤컮??釉뚮씪?곗? 理쒖떊??媛뺤젣 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Retro Cyber Avoid - 추억의 총알 피하기</title>
+    <title>Retro Cyber Avoid - 異붿뼲??珥앹븣 ?쇳븯湲?/title>
     <!-- Google Fonts: Orbitron for futuristic headers, Press Start 2P for retro arcade numbers -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&family=Noto+Sans+KR:wght@300;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=4.0">
-    <!-- PayPal SDK (개발/테스트 시에는 client-id=sb, 실 결제 Live 전환 시에는 발급된 실서버 Client ID로 교체합니다) -->
+    <link rel="stylesheet" href="style.css?v=4.1">
+    <!-- PayPal SDK (媛쒕컻/?뚯뒪???쒖뿉??client-id=sb, ??寃곗젣 Live ?꾪솚 ?쒖뿉??諛쒓툒???ㅼ꽌踰?Client ID濡?援먯껜?⑸땲?? -->
     <script src="https://www.paypal.com/sdk/js?client-id=AeK3dPx2ju4g9zZZtLzdmkRMypHkFmSqtGSy13C00nX35Gx9G32FprXYoX6FH1l44V0OinF5XB1NiZXy&currency=USD&disable-funding=credit,card"></script>
-    <!-- Portone SDK (국내 카드 및 간편결제 연동용) -->
+    <!-- Portone SDK (援?궡 移대뱶 諛?媛꾪렪寃곗젣 ?곕룞?? -->
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
-    <!-- 구글 애드센스 공식 연동 스크립트 (대표님의 ca-pub ID로 대체해서 사용 가능) -->
+    <!-- 援ш? ?좊뱶?쇱뒪 怨듭떇 ?곕룞 ?ㅽ겕由쏀듃 (??쒕떂??ca-pub ID濡??泥댄빐???ъ슜 媛?? -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXX" crossorigin="anonymous"></script>
 
-    <!-- Firebase SDK v8 CDN 연동 (바닐라 연동에 최적화된 호환 라이브러리) -->
+    <!-- Firebase SDK v8 CDN ?곕룞 (諛붾땺???곕룞??理쒖쟻?붾맂 ?명솚 ?쇱씠釉뚮윭由? -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -34,15 +34,15 @@
     </header>
 
     <div class="arcade-wrapper">
-        <!-- 좌측 패널: 능력치 및 상세 스테이터스 -->
+        <!-- 醫뚯륫 ?⑤꼸: ?λ젰移?諛??곸꽭 ?ㅽ뀒?댄꽣??-->
         <aside class="arcade-sidebar left-panel">
             <div class="panel-header">STATUS</div>
             <div class="panel-content">
-                <!-- 파일럿 인증 정보 패널 -->
+                <!-- ?뚯씪???몄쬆 ?뺣낫 ?⑤꼸 -->
                 <div class="status-item pilot-auth-panel">
                     <span class="label">PILOT REGISTRY</span>
                     <div id="pilot-profile-card" class="pilot-profile-card">
-                        <div id="pilot-avatar" class="pilot-avatar-default">👤</div>
+                        <div id="pilot-avatar" class="pilot-avatar-default">?뫀</div>
                         <div class="pilot-info">
                             <span id="pilot-name" class="value small-value text-cyan" style="font-size: 0.68rem !important; letter-spacing: 0.5px;">GUEST PILOT</span>
                             <span id="pilot-status" class="pilot-status-text">OFFLINE</span>
@@ -93,13 +93,13 @@
                 
                 <div class="status-divider"></div>
                 
-                <!-- 명예의 전당 Top 5 순위판 -->
+                <!-- 紐낆삁???꾨떦 Top 5 ?쒖쐞??-->
                 <div class="status-item">
                     <span class="label">TOP 5 PILOTS</span>
                     <div class="leaderboard-table-container">
                         <table class="leaderboard-table font-arcade">
                             <tbody id="hud-leaderboard-body">
-                                <!-- JS에서 동적으로 순위 행 추가 -->
+                                <!-- JS?먯꽌 ?숈쟻?쇰줈 ?쒖쐞 ??異붽? -->
                             </tbody>
                         </table>
                     </div>
@@ -117,43 +117,48 @@
             </div>
         </aside>
 
-        <!-- 중앙 패널: 게임 화면 및 캐비닛 -->
+        <!-- 以묒븰 ?⑤꼸: 寃뚯엫 ?붾㈃ 諛?罹먮퉬??-->
         <main class="arcade-cabinet">
             <div class="cabinet-top-neon"></div>
             
-            <!-- 캔버스 컨테이너 (오버레이 포지셔닝용) -->
+            <!-- 罹붾쾭??而⑦뀒?대꼫 (?ㅻ쾭?덉씠 ?ъ??붾떇?? -->
             <div class="canvas-container" id="canvas-container">
                 <canvas id="gameCanvas" width="450" height="750"></canvas>
                 
-                <!-- 모바일 및 마우스 유저용 일시정지 버튼 -->
-                <button id="btn-pause-trigger" class="btn-pause-trigger font-orbitron">⏸</button>
+                <!-- 紐⑤컮??諛?留덉슦???좎????쇱떆?뺤? 踰꾪듉 -->
+                <button id="btn-pause-trigger" class="btn-pause-trigger font-orbitron">??/button>
 
-                <!-- 🎮 모바일 인게임 HUD (화면 최상단 레이어) -->
+                <!-- ?렜 紐⑤컮???멸쾶??HUD (?붾㈃ 理쒖긽???덉씠?? -->
                 <div id="mobile-game-hud" class="mobile-game-hud">
                     <div class="hud-item hud-level">
                         <span class="hud-label">LV</span>
                         <span id="hud-level-val" class="hud-value">1</span>
                     </div>
-                    <div class="hud-item hud-shield">
-                        <span class="hud-label">🛡</span>
-                        <span id="hud-shield-val" class="hud-value">100</span>
+                    <div class="hud-shield-wrapper">
+                        <div class="hud-shield-header">
+                            <span class="hud-label">?썳 SHIELD</span>
+                            <span id="hud-shield-val" class="hud-shield-pct">100%</span>
+                        </div>
+                        <div class="hud-shield-container">
+                            <div id="hud-shield-fill" class="hud-shield-fill"></div>
+                        </div>
                     </div>
                     <div class="hud-item hud-time">
-                        <span class="hud-label">⏱</span>
+                        <span class="hud-label">??/span>
                         <span id="hud-time-val" class="hud-value">0.0s</span>
                     </div>
                 </div>
                 
-                <!-- 시작 오버레이 -->
+                <!-- ?쒖옉 ?ㅻ쾭?덉씠 -->
                 <div id="overlay-start" class="game-overlay active">
                     <div class="overlay-content">
                         <h2 class="arcade-title pulse-glow">RETRO DODGE</h2>
-                        <p class="overlay-desc">총알을 피해 살아남으십시오.<br>코인을 모아 기체를 업그레이드하세요.</p>
+                        <p class="overlay-desc">珥앹븣???쇳빐 ?댁븘?⑥쑝??떆??<br>肄붿씤??紐⑥븘 湲곗껜瑜??낃렇?덉씠?쒗븯?몄슂.</p>
                         <button id="btn-start" class="neon-btn font-orbitron">MISSION START</button>
                         <button id="btn-open-hangar" class="neon-btn btn-pink font-orbitron" style="margin-top: 10px; width: 220px; font-size: 0.8rem; padding: 10px 0;">HANGAR / SHOP</button>
                         
-                        <!-- 시작 화면 하단 구글 애드센스 광고 (디스플레이 300x100) -->
-                        <!-- 시작 화면 하단 구글 애드센스 광고 (디스플레이 300x100) -->
+                        <!-- ?쒖옉 ?붾㈃ ?섎떒 援ш? ?좊뱶?쇱뒪 愿묎퀬 (?붿뒪?뚮젅??300x100) -->
+                        <!-- ?쒖옉 ?붾㈃ ?섎떒 援ш? ?좊뱶?쇱뒪 愿묎퀬 (?붿뒪?뚮젅??300x100) -->
                         <div class="lobby-ad-container adsense-start" id="lobby-ad-box">
                             <ins class="adsbygoogle"
                                  style="display:inline-block;width:300px;height:100px"
@@ -164,7 +169,7 @@
                             </script>
                             <div class="adsense-fallback-text font-orbitron">GOOGLE ADSENSE (300x100)</div>
                             
-                            <!-- 스킨 장착 시 및 미장착 시 띄워주는 배너 이미지 영역 (안 잘리게 object-fit: contain 및 수평 중앙 정렬) -->
+                            <!-- ?ㅽ궓 ?μ갑 ??諛?誘몄옣李????꾩썙二쇰뒗 諛곕꼫 ?대?吏 ?곸뿭 (???섎━寃?object-fit: contain 諛??섑룊 以묒븰 ?뺣젹) -->
                             <img id="lobby-skin-banner-default" src="default_lobby_banner.png" class="lobby-skin-banner" alt="Antigravity Default">
                             <img id="lobby-skin-banner-goldie" src="goldie_voyager_skin.png" class="lobby-skin-banner" alt="Goldie Voyager" style="display: none;">
                             <img id="lobby-skin-banner-buddy" src="cyber_buddy_skin.png" class="lobby-skin-banner" alt="Cyber Buddy" style="display: none;">
@@ -172,92 +177,92 @@
                     </div>
                 </div>
 
-                <!-- 격납고/상점 오버레이 -->
+                <!-- 寃⑸궔怨??곸젏 ?ㅻ쾭?덉씠 -->
                 <div id="overlay-hangar" class="game-overlay">
                     <div class="overlay-content" style="width: 92%; gap: 12px;">
                         <h2 class="arcade-title text-cyan" style="font-size: 1.15rem; margin-bottom: 2px;">HANGAR & SHOP</h2>
-                        <div class="shop-credits font-orbitron" style="font-size: 0.85rem; letter-spacing: 1.5px;">CREDITS: <span id="shop-coins" class="text-yellow">000000</span> ₵</div>
+                        <div class="shop-credits font-orbitron" style="font-size: 0.85rem; letter-spacing: 1.5px;">CREDITS: <span id="shop-coins" class="text-yellow">000000</span> ??/div>
                         
-                        <!-- 기체 선택 컨테이너 -->
+                        <!-- 湲곗껜 ?좏깮 而⑦뀒?대꼫 -->
                         <div class="ship-select-container">
                             <div class="ship-card active" data-ship-id="default">
                                 <div class="ship-name">NEO PILOT</div>
-                                <div class="ship-desc">기본형 기체 (평균 능력치)</div>
+                                <div class="ship-desc">湲곕낯??湲곗껜 (?됯퇏 ?λ젰移?</div>
                                 <div class="ship-specs">SPD: 1.0x | MAG: 40px | HIT: 100%</div>
                                 <button class="btn-ship-action neon-btn-small" data-ship-id="default">EQUIPPED</button>
                             </div>
                             <div class="ship-card" data-ship-id="magnet">
                                 <div class="ship-name text-cyan">MAGNET VORTEX</div>
-                                <div class="ship-desc">코인 인력 강화 (파밍 특화)</div>
+                                <div class="ship-desc">肄붿씤 ?몃젰 媛뺥솕 (?뚮컢 ?뱁솕)</div>
                                 <div class="ship-specs">SPD: 0.95x | MAG: 130px | HIT: 100%</div>
-                                <button class="btn-ship-action neon-btn-small" data-ship-id="magnet">BUY: 3000₵</button>
+                                <button class="btn-ship-action neon-btn-small" data-ship-id="magnet">BUY: 3000??/button>
                             </div>
                             <div class="ship-card" data-ship-id="aegis">
                                 <div class="ship-name text-purple">AEGIS COMMANDER</div>
-                                <div class="ship-desc">실드 용량 증가 (생존 특화)</div>
+                                <div class="ship-desc">?ㅻ뱶 ?⑸웾 利앷? (?앹〈 ?뱁솕)</div>
                                 <div class="ship-specs">SPD: 0.85x | MAG: 30px | HIT: 140%</div>
-                                <button class="btn-ship-action neon-btn-small" data-ship-id="aegis">BUY: 5000₵</button>
+                                <button class="btn-ship-action neon-btn-small" data-ship-id="aegis">BUY: 5000??/button>
                             </div>
                             <div class="ship-card" data-ship-id="swift">
                                 <div class="ship-name text-pink">SWIFT RAVEN</div>
-                                <div class="ship-desc">기체 크기 감소 및 속도 증가 (회피 특화)</div>
+                                <div class="ship-desc">湲곗껜 ?ш린 媛먯냼 諛??띾룄 利앷? (?뚰뵾 ?뱁솕)</div>
                                 <div class="ship-specs">SPD: 1.15x | MAG: 40px | HIT: 85%</div>
-                                <button class="btn-ship-action neon-btn-small" data-ship-id="swift">BUY: 8000₵</button>
+                                <button class="btn-ship-action neon-btn-small" data-ship-id="swift">BUY: 8000??/button>
                             </div>
-                            <!-- 🐕 대표님의 골든 리트리버 스페셜 스킨 추가 -->
+                            <!-- ?릷 ??쒕떂??怨⑤뱺 由ы듃由щ쾭 ?ㅽ럹???ㅽ궓 異붽? -->
                             <div class="ship-card" data-ship-id="goldie">
                                 <div class="ship-name text-yellow">GOLDIE VOYAGER</div>
-                                <div class="ship-desc">우주복을 입은 골든 리트리버! (코인 대폭 인력)</div>
+                                <div class="ship-desc">?곗＜蹂듭쓣 ?낆? 怨⑤뱺 由ы듃由щ쾭! (肄붿씤 ????몃젰)</div>
                                 <div class="ship-specs">SPD: 1.05x | MAG: 150px | HIT: 90%</div>
-                                <button class="btn-ship-action neon-btn-small" data-ship-id="goldie">BUY: 10000₵</button>
+                                <button class="btn-ship-action neon-btn-small" data-ship-id="goldie">BUY: 10000??/button>
                             </div>
                             <div class="ship-card" data-ship-id="buddy">
                                 <div class="ship-name text-green">CYBER BUDDY</div>
-                                <div class="ship-desc">제트팩을 장착한 크림 리트리버! (실드 15초 자동 회복)</div>
+                                <div class="ship-desc">?쒗듃?⑹쓣 ?μ갑???щ┝ 由ы듃由щ쾭! (?ㅻ뱶 15珥??먮룞 ?뚮났)</div>
                                 <div class="ship-specs">SPD: 0.95x | MAG: 55px | HIT: 100%</div>
-                                <button class="btn-ship-action neon-btn-small" data-ship-id="buddy">BUY: 12000₵</button>
+                                <button class="btn-ship-action neon-btn-small" data-ship-id="buddy">BUY: 12000??/button>
                             </div>
                         </div>
 
-                        <!-- 영구 업그레이드 슬롯 -->
+                        <!-- ?곴뎄 ?낃렇?덉씠???щ’ -->
                         <div class="upgrades-container">
                             <div class="upgrade-row">
                                 <div class="up-label font-orbitron">SHIELD CAP (+6%/Lv)</div>
-                                <div class="up-status" id="lvl-shieldCap">🟩⬜⬜⬜⬜</div>
-                                <button class="btn-upgrade neon-btn-small" id="btn-up-shieldCap">UP: 500₵</button>
+                                <div class="up-status" id="lvl-shieldCap">?윪燧쒋쵚燧쒋쵚</div>
+                                <button class="btn-upgrade neon-btn-small" id="btn-up-shieldCap">UP: 500??/button>
                             </div>
                             <div class="upgrade-row">
                                 <div class="up-label font-orbitron">MAGNET RANGE (+20px/Lv)</div>
-                                <div class="up-status" id="lvl-magnetRange">🟩⬜⬜⬜⬜</div>
-                                <button class="btn-upgrade neon-btn-small" id="btn-up-magnetRange">UP: 400₵</button>
+                                <div class="up-status" id="lvl-magnetRange">?윪燧쒋쵚燧쒋쵚</div>
+                                <button class="btn-upgrade neon-btn-small" id="btn-up-magnetRange">UP: 400??/button>
                             </div>
                             <div class="upgrade-row">
                                 <div class="up-label font-orbitron">SHIELD TIME (+0.5s/Lv)</div>
-                                <div class="up-status" id="lvl-shieldDuration">🟩⬜⬜⬜⬜</div>
-                                <button class="btn-upgrade neon-btn-small" id="btn-up-shieldDuration">UP: 600₵</button>
+                                <div class="up-status" id="lvl-shieldDuration">?윪燧쒋쵚燧쒋쵚</div>
+                                <button class="btn-upgrade neon-btn-small" id="btn-up-shieldDuration">UP: 600??/button>
                             </div>
                         </div>
 
-                        <!-- ₵ 코인 결제 충전소 -->
+                        <!-- ??肄붿씤 寃곗젣 異⑹쟾??-->
                         <div class="coin-shop-container">
                             <div class="shop-title font-orbitron text-pink">CREDIT REFILL SHOP</div>
                             <div class="package-list">
-                                <!-- 1달러 특화 강조 클래스 pack-starter와 스페셜 뱃지 추가 -->
+                                <!-- 1?щ윭 ?뱁솕 媛뺤“ ?대옒??pack-starter? ?ㅽ럹??諭껋? 異붽? -->
                                 <div class="package-card pack-starter" data-amount="0.99" data-credits="5000">
                                     <div class="pack-badge font-orbitron blink-fast">BEST BUY</div>
                                     <div class="pack-name font-orbitron">STARTER</div>
-                                    <div class="pack-amount text-yellow">5,000₵</div>
+                                    <div class="pack-amount text-yellow">5,000??/div>
                                     <div class="pack-price">$0.99 USD</div>
                                 </div>
                                 <div class="package-card active" data-amount="1.99" data-credits="12000">
                                     <div class="pack-name font-orbitron">BOOSTER</div>
-                                    <div class="pack-amount text-cyan">12,000₵</div>
+                                    <div class="pack-amount text-cyan">12,000??/div>
                                     <div class="pack-price">$1.99 USD</div>
                                 </div>
                             </div>
                             
-                            <!-- 국내 결제 버튼 (Portone) -->
-                            <button id="btn-portone-pay" class="neon-btn font-orbitron" style="width: 100%; padding: 10px 0; font-size: 0.75rem; border-color: var(--neon-cyan); color: var(--neon-cyan); margin-top: 5px;">⚡ 국내 간편결제 (카카오/네이버/카드)</button>
+                            <!-- 援?궡 寃곗젣 踰꾪듉 (Portone) -->
+                            <button id="btn-portone-pay" class="neon-btn font-orbitron" style="width: 100%; padding: 10px 0; font-size: 0.75rem; border-color: var(--neon-cyan); color: var(--neon-cyan); margin-top: 5px;">??援?궡 媛꾪렪寃곗젣 (移댁뭅???ㅼ씠踰?移대뱶)</button>
                             
                             <!-- PayPal Smart Buttons Container -->
                             <div id="paypal-button-container"></div>
@@ -267,22 +272,22 @@
                     </div>
                 </div>
 
-                <!-- 레벨업 오버레이 -->
+                <!-- ?덈꺼???ㅻ쾭?덉씠 -->
                 <div id="overlay-levelup" class="game-overlay">
                     <div class="overlay-content">
                         <h2 class="arcade-title text-green blink-fast">LEVEL CLEARED!</h2>
-                        <p class="overlay-desc text-cyan">워프 게이트가 안정화되었습니다.<br>다음 레벨로 돌입합니다.</p>
+                        <p class="overlay-desc text-cyan">?뚰봽 寃뚯씠?멸? ?덉젙?붾릺?덉뒿?덈떎.<br>?ㅼ쓬 ?덈꺼濡??뚯엯?⑸땲??</p>
                         <div class="level-transition-meter">
                             <div class="warp-beam"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 부활 찬스 오버레이 -->
+                <!-- 遺??李ъ뒪 ?ㅻ쾭?덉씠 -->
                 <div id="overlay-revive" class="game-overlay">
                     <div class="overlay-content" style="gap: 15px;">
                         <h2 class="arcade-title text-yellow blink-fast" style="font-size: 1.3rem;">EMERGENCY PROTOCOL</h2>
-                        <p class="overlay-desc">함선 격침 위기! 부활 시스템을 작동하시겠습니까?</p>
+                        <p class="overlay-desc">?⑥꽑 寃⑹묠 ?꾧린! 遺???쒖뒪?쒖쓣 ?묐룞?섏떆寃좎뒿?덇퉴?</p>
                         
                         <div class="revive-timer font-arcade" id="revive-countdown" style="font-size: 2.2rem; color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); margin: 5px 0;">6</div>
                         
@@ -292,14 +297,14 @@
                     </div>
                 </div>
 
-                <!-- 광고 시청창 (구글 애드센스 연동형) -->
+                <!-- 愿묎퀬 ?쒖껌李?(援ш? ?좊뱶?쇱뒪 ?곕룞?? -->
                 <div id="overlay-ad-player" class="game-overlay" style="background: rgba(0, 0, 0, 0.95);">
                     <div class="ad-screen">
                         <div class="ad-tv-lines"></div>
-                        <div class="ad-header font-orbitron" style="color: var(--neon-cyan); letter-spacing: 2px;">★ SPONSORED ADVERTISEMENT ★</div>
+                        <div class="ad-header font-orbitron" style="color: var(--neon-cyan); letter-spacing: 2px;">??SPONSORED ADVERTISEMENT ??/div>
                         
-                        <!-- 구글 애드센스 300x250 사각형 배너 광고 영역 -->
-                        <!-- 대표님! 구글 애드센스 승인 완료 후 아래의 ca-pub-XXXXX 와 data-ad-slot-YYYYY 를 대표님의 애드센스 정보로 치환해주시면 광고가 정상 노출됩니다! -->
+                        <!-- 援ш? ?좊뱶?쇱뒪 300x250 ?ш컖??諛곕꼫 愿묎퀬 ?곸뿭 -->
+                        <!-- ??쒕떂! 援ш? ?좊뱶?쇱뒪 ?뱀씤 ?꾨즺 ???꾨옒??ca-pub-XXXXX ? data-ad-slot-YYYYY 瑜???쒕떂???좊뱶?쇱뒪 ?뺣낫濡?移섑솚?댁＜?쒕㈃ 愿묎퀬媛 ?뺤긽 ?몄텧?⑸땲?? -->
                         <div class="adsense-container" style="width: 300px; height: 250px; margin: 20px auto; background: #111; display: flex; align-items: center; justify-content: center; border: 2px solid var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); position: relative; border-radius: 4px;">
                             <ins class="adsbygoogle"
                                  style="display:inline-block;width:300px;height:250px"
@@ -318,12 +323,12 @@
                         </div>
                         <div class="ad-timer font-orbitron" id="ad-timer-text" style="color: var(--neon-pink); font-size: 13px;">ADVERTISEMENT ENDS IN 5s</div>
                         
-                        <!-- 5초 후에 활성화되는 스킵/부활 완료 버튼 -->
-                        <button id="btn-ad-skip" class="neon-btn font-orbitron hidden" style="margin: 15px auto 0 auto; width: 220px; font-size: 0.8rem; padding: 10px 0; display: block;">SKIP AD & REVIVE 🚀</button>
+                        <!-- 5珥??꾩뿉 ?쒖꽦?붾릺???ㅽ궢/遺???꾨즺 踰꾪듉 -->
+                        <button id="btn-ad-skip" class="neon-btn font-orbitron hidden" style="margin: 15px auto 0 auto; width: 220px; font-size: 0.8rem; padding: 10px 0; display: block;">SKIP AD & REVIVE ??</button>
                     </div>
                 </div>
 
-                <!-- 게임오버 오버레이 -->
+                <!-- 寃뚯엫?ㅻ쾭 ?ㅻ쾭?덉씠 -->
                 <div id="overlay-gameover" class="game-overlay">
                     <div class="overlay-content">
                         <h2 class="arcade-title text-pink">SHIP DESTROYED</h2>
@@ -332,17 +337,17 @@
                             <div>FINAL SCORE: <span id="summary-score" class="text-yellow">000000</span></div>
                         </div>
                         
-                        <!-- 파일럿 이름 입력 창 (랭킹용) -->
+                        <!-- ?뚯씪???대쫫 ?낅젰 李?(??궧?? -->
                         <div id="ranking-input-box" class="ranking-input-box">
                             <p class="ranking-prompt font-orbitron text-cyan">REGISTRY OPEN: ENTER PILOT NAME</p>
                             <input type="text" id="player-name-input" maxlength="8" placeholder="PILOT..." class="cyber-input font-orbitron" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
                             <button id="btn-submit-score" class="neon-btn btn-cyan font-orbitron">SUBMIT SCORE</button>
                         </div>
                         
-                        <p id="new-record-banner" class="new-record hidden">★ NEW HIGH SCORE ★</p>
+                        <p id="new-record-banner" class="new-record hidden">??NEW HIGH SCORE ??/p>
                         <button id="btn-restart" class="neon-btn btn-pink font-orbitron hidden">RETRY MISSION</button>
                         
-                        <!-- 게임 오버 하단 구글 애드센스 광고 (디스플레이 300x120) -->
+                        <!-- 寃뚯엫 ?ㅻ쾭 ?섎떒 援ш? ?좊뱶?쇱뒪 愿묎퀬 (?붿뒪?뚮젅??300x120) -->
                         <div class="adsense-gameover" style="width: 300px; height: 120px; margin: 15px auto 0 auto; background: #111; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--neon-pink); position: relative; overflow: hidden; border-radius: 4px;">
                             <ins class="adsbygoogle"
                                  style="display:inline-block;width:300px;height:120px"
@@ -356,11 +361,11 @@
                     </div>
                 </div>
 
-                <!-- 일시정지 오버레이 -->
+                <!-- ?쇱떆?뺤? ?ㅻ쾭?덉씠 -->
                 <div id="overlay-paused" class="game-overlay">
                     <div class="overlay-content">
                         <h2 class="arcade-title text-yellow">PAUSED</h2>
-                        <p class="overlay-desc">게임이 잠시 정지되었습니다.</p>
+                        <p class="overlay-desc">寃뚯엫???좎떆 ?뺤??섏뿀?듬땲??</p>
                         <button id="btn-resume" class="neon-btn font-orbitron" style="margin-bottom: 12px;">RESUME MISSION</button>
                         <button id="btn-quit" class="neon-btn font-orbitron btn-pink">QUIT MISSION</button>
                     </div>
@@ -373,11 +378,11 @@
             </div>
         </main>
 
-        <!-- 우측 패널: 조작 방식 및 세팅 -->
+        <!-- ?곗륫 ?⑤꼸: 議곗옉 諛⑹떇 諛??명똿 -->
         <aside class="arcade-sidebar right-panel">
             <div class="panel-header">CONTROLS</div>
             <div class="panel-content flex-grow">
-                <!-- 조작 모드 토글 -->
+                <!-- 議곗옉 紐⑤뱶 ?좉? -->
                 <div class="control-toggle-box">
                     <div class="label font-orbitron">CONTROL MODE</div>
                     <div class="toggle-buttons">
@@ -387,45 +392,45 @@
                     </div>
                 </div>
 
-                <!-- 조작법 카드 -->
+                <!-- 議곗옉踰?移대뱶 -->
                 <div class="help-card" id="help-keyboard">
                     <div class="help-item">
-                        <div class="key-cap">◀</div>
-                        <div class="key-cap">▲</div>
-                        <div class="key-cap">▼</div>
-                        <div class="key-cap">▶</div>
-                        <span class="help-desc">이동 (방향키)</span>
+                        <div class="key-cap">?</div>
+                        <div class="key-cap">??/div>
+                        <div class="key-cap">??/div>
+                        <div class="key-cap">??/div>
+                        <span class="help-desc">?대룞 (諛⑺뼢??</span>
                     </div>
                     <div class="help-item">
                         <div class="key-cap-wide">W</div>
                         <div class="key-cap-wide">A</div>
                         <div class="key-cap-wide">S</div>
                         <div class="key-cap-wide">D</div>
-                        <span class="help-desc">이동 (대체)</span>
+                        <span class="help-desc">?대룞 (?泥?</span>
                     </div>
                     <div class="help-item">
                         <div class="key-cap-wide">ESC</div>
-                        <span class="help-desc">일시정지 / 해제</span>
+                        <span class="help-desc">?쇱떆?뺤? / ?댁젣</span>
                     </div>
                 </div>
 
                 <div class="help-card hidden" id="help-mouse">
                     <div class="help-item">
-                        <div class="mouse-icon">🖱️</div>
-                        <span class="help-desc">게임 캔버스 위에서 마우스를 부드럽게 움직이면 비행기가 즉시 포인터를 따라 이동합니다.</span>
+                        <div class="mouse-icon">?뼮截?/div>
+                        <span class="help-desc">寃뚯엫 罹붾쾭???꾩뿉??留덉슦?ㅻ? 遺?쒕읇寃??吏곸씠硫?鍮꾪뻾湲곌? 利됱떆 ?ъ씤?곕? ?곕씪 ?대룞?⑸땲??</span>
                     </div>
                 </div>
 
                 <div class="help-card hidden" id="help-tilt">
                     <div class="help-item" style="text-align: center; display: block;">
-                        <div class="gyro-icon" style="font-size: 28px; margin-bottom: 8px;">📱🔄</div>
-                        <span class="help-desc" style="font-size: 11px; line-height: 1.4; display: block; color: var(--neon-cyan);">스마트폰을 상하좌우로 기울이면 비행기가 그 방향으로 부드럽게 비행합니다. (기본 파지각 45도 기준)</span>
+                        <div class="gyro-icon" style="font-size: 28px; margin-bottom: 8px;">?벑?봽</div>
+                        <span class="help-desc" style="font-size: 11px; line-height: 1.4; display: block; color: var(--neon-cyan);">?ㅻ쭏?명룿???곹븯醫뚯슦濡?湲곗슱?대㈃ 鍮꾪뻾湲곌? 洹?諛⑺뼢?쇰줈 遺?쒕읇寃?鍮꾪뻾?⑸땲?? (湲곕낯 ?뚯?媛?45??湲곗?)</span>
                     </div>
                 </div>
 
                 <div class="status-divider"></div>
 
-                <!-- 오디오 & 기타 세팅 -->
+                <!-- ?ㅻ뵒??& 湲고? ?명똿 -->
                 <div class="settings-box">
                     <div class="label font-orbitron">SYSTEM SETTINGS</div>
                     <button id="btn-mute" class="neon-btn-small font-orbitron">SOUND: ON</button>
@@ -439,20 +444,20 @@
         </aside>
     </div>
 
-    <!-- 푸터 -->
+    <!-- ?명꽣 -->
     <footer class="main-footer">
-        <p>© 2026 Retro Cyber Avoid. Inspired by classic BASIC code. Developed with Antigravity.</p>
+        <p>짤 2026 Retro Cyber Avoid. Inspired by classic BASIC code. Developed with Antigravity.</p>
     </footer>
 
-    <!-- 사이버펑크 네온 로그인 모달 -->
+    <!-- ?ъ씠踰꾪럱???ㅼ삩 濡쒓렇??紐⑤떖 -->
     <div id="login-modal" class="login-modal-overlay">
         <div class="login-modal-content">
             <div class="login-modal-header">
                 <h2 class="arcade-title text-cyan" style="font-size: 1.2rem;">PILOT SIGN IN</h2>
-                <button id="btn-login-close-modal" class="btn-close-x">×</button>
+                <button id="btn-login-close-modal" class="btn-close-x">횞</button>
             </div>
             <div class="login-modal-body">
-                <p class="login-desc font-orbitron" style="font-size: 0.72rem; line-height: 1.5; color: rgba(255, 255, 255, 0.65); margin-bottom: 12px;">데이터베이스에 연동하여 파일럿 데이터(코인, 스킨, 점수)를 클라우드에 영구히 저장하십시오.</p>
+                <p class="login-desc font-orbitron" style="font-size: 0.72rem; line-height: 1.5; color: rgba(255, 255, 255, 0.65); margin-bottom: 12px;">?곗씠?곕쿋?댁뒪???곕룞?섏뿬 ?뚯씪???곗씠??肄붿씤, ?ㅽ궓, ?먯닔)瑜??대씪?곕뱶???곴뎄????ν븯??떆??</p>
                 
                 <div class="login-form-group" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; width: 100%;">
                     <input type="email" id="login-email" placeholder="EMAIL..." class="cyber-input font-orbitron" style="width: 100%; font-size: 0.85rem; letter-spacing: 1px; padding: 8px 10px; text-align: left;">
@@ -470,17 +475,18 @@
                     <span style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1); margin-left: 10px;"></span>
                 </div>
 
-                <!-- Google 간편 로그인 -->
+                <!-- Google 媛꾪렪 濡쒓렇??-->
                 <button id="btn-google-signin" class="neon-btn font-orbitron" style="width: 100%; border-color: var(--neon-yellow); color: var(--neon-yellow); font-size: 0.75rem; padding: 8px 0; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 2px;">
-                    <span style="font-size: 0.95rem;">🌐</span> GOOGLE QUICK SIGN IN
+                    <span style="font-size: 0.95rem;">?뙋</span> GOOGLE QUICK SIGN IN
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 로그인 및 인증 모듈 탑재 -->
-    <script src="auth.js?v=4.0"></script>
-    <!-- 게임 스크립트 연결 (캐시 버스팅 연동) -->
-    <script src="game.js?v=4.0"></script>
+    <!-- 濡쒓렇??諛??몄쬆 紐⑤뱢 ?묒옱 -->
+    <script src="auth.js?v=4.1"></script>
+    <!-- 寃뚯엫 ?ㅽ겕由쏀듃 ?곌껐 (罹먯떆 踰꾩뒪???곕룞) -->
+    <script src="game.js?v=4.1"></script>
 </body>
 </html>
+

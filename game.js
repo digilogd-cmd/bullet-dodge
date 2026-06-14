@@ -448,6 +448,7 @@ const summaryScore = document.getElementById('summary-score');
 const mobileGameHud = document.getElementById('mobile-game-hud');
 const hudLevelVal  = document.getElementById('hud-level-val');
 const hudShieldVal = document.getElementById('hud-shield-val');
+const hudShieldFill = document.getElementById('hud-shield-fill'); // 🛡 실드 바 그래프
 const hudTimeVal   = document.getElementById('hud-time-val');
 
 // 모바일 HUD 표시/숨김 함수
@@ -1830,9 +1831,34 @@ function updateHUD() {
     domCoins.innerText = String(totalCoins + sessionCoins).padStart(6, '0');
 
     // 📱 모바일 HUD 실시간 업데이트
-    if (hudLevelVal)  hudLevelVal.innerText  = level;
-    if (hudShieldVal) hudShieldVal.innerText = Math.max(0, Math.ceil(shield));
-    if (hudTimeVal)   hudTimeVal.innerText   = survivalTime.toFixed(1) + 's';
+    if (hudLevelVal) hudLevelVal.innerText = level;
+
+    // 🛡 실드 바 그래프 업데이트
+    if (hudShieldVal || hudShieldFill) {
+        const shieldPct = player ? Math.max(0, Math.min(100, (shield / player.maxShield) * 100)) : 100;
+        if (hudShieldVal) hudShieldVal.innerText = Math.ceil(shieldPct) + '%';
+        if (hudShieldFill) {
+            hudShieldFill.style.width = shieldPct + '%';
+            if (player && player.isShielded) {
+                // 무적 실드 활성화: 시안+퍼플 강렬한 발광
+                hudShieldFill.style.background = 'linear-gradient(90deg, #00f3ff, #9d00ff)';
+                hudShieldFill.style.boxShadow  = '0 0 14px #00f3ff, 0 0 6px #9d00ff';
+                hudShieldFill.style.animation  = 'blink 0.2s infinite alternate';
+            } else if (shieldPct <= 30) {
+                // 위험 구간: 빨간 경고 바 + 깜빡임
+                hudShieldFill.style.background = 'linear-gradient(90deg, #ff003c, #ff6a00)';
+                hudShieldFill.style.boxShadow  = '0 0 10px #ff003c';
+                hudShieldFill.style.animation  = 'blink 0.45s infinite alternate';
+            } else {
+                // 정상: 시안→퍼플 그라데이션
+                hudShieldFill.style.background = 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))';
+                hudShieldFill.style.boxShadow  = '0 0 8px var(--neon-cyan)';
+                hudShieldFill.style.animation  = 'none';
+            }
+        }
+    }
+
+    if (hudTimeVal) hudTimeVal.innerText = survivalTime.toFixed(1) + 's';
 
 }
 
