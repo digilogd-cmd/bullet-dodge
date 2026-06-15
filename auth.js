@@ -476,7 +476,7 @@ fetchUserCountry();
 
 // 명예의 전당 (리더보드) 불러오기 함수
 window.showGlobalLeaderboard = async function() {
-    const modal = document.getElementById('leaderboard-modal');
+    
     const listBody = document.getElementById('leaderboard-list');
     
     if (!db || isMockAuth) {
@@ -484,7 +484,7 @@ window.showGlobalLeaderboard = async function() {
         return;
     }
     
-    modal.classList.add('active');
+    
     listBody.innerHTML = '<div style="text-align:center; padding:20px; color:#00F3FF;">Fetching Global Data...</div>';
     
     try {

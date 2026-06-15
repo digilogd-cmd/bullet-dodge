@@ -149,7 +149,7 @@
                     <div class="overlay-content">
                         <h2 class="arcade-title pulse-glow">RETRO DODGE</h2>
                         <p class="overlay-desc">총알을 피해 살아남으십시오.<br>코인을 모아 기체를 업그레이드하세요.</p>
-                        <button id="btn-leaderboard" class="font-orbitron" style="display: block; margin: 10px auto; padding: 12px 30px; font-size: 1.2rem; font-weight: 700; color: #FFF; background-color: transparent; border: 2px solid gold; border-radius: 4px; cursor: pointer; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); text-transform: uppercase; transition: all 0.3s;" onclick="showGlobalLeaderboard()">🏆 GLOBAL LEADERBOARD</button>
+
             <button id="btn-start" class="neon-btn font-orbitron">MISSION START</button>
                         <button id="btn-open-hangar" class="neon-btn btn-pink font-orbitron" style="margin-top: 10px; width: 220px; font-size: 0.8rem; padding: 10px 0;">HANGAR / SHOP</button>
                         
@@ -442,7 +442,26 @@
                 </div>
             </div>
 
-            <div class="credits-box font-arcade">
+            
+                <!-- Global Leaderboard Panel -->
+                <div id="leaderboard-panel" class="settings-box" style="margin-top: 20px; padding: 0; background: none; border: none; box-shadow: none;">
+                    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px; border-bottom: 2px solid var(--neon-cyan); padding-bottom: 5px;">
+                        <h3 class="font-orbitron" style="margin: 0; color: gold; text-shadow: 0 0 10px gold; font-size: 1rem;">🏆 HALL OF FAME</h3>
+                    </div>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding: 5px; background: rgba(255,255,255,0.1); border-radius: 4px 4px 0 0; font-weight: bold; color: var(--neon-cyan); font-size: 0.75rem;">
+                        <div style="flex:1; text-align:center;">RANK</div>
+                        <div style="flex:1; text-align:center;">NAT</div>
+                        <div style="flex:3; text-align:left; padding-left: 5px;">PILOT</div>
+                        <div style="flex:2; text-align:right;">SCORE</div>
+                    </div>
+                    
+                    <div id="leaderboard-list" style="height: 250px; overflow-y: auto; background: rgba(0,0,0,0.5); border-radius: 0 0 4px 4px; font-size: 0.8rem;">
+                        <!-- Ranks will be injected here -->
+                    </div>
+                </div>
+
+                <div class="credits-box font-arcade">
                 GRAVY SYSTEMS V1.0<br>
                 EST. 2026
             </div>
@@ -493,26 +512,7 @@
     <!-- 게임 스크립트 연결 (캐시 버스팅 연동) -->
     <script src="game.js?v=4.3"></script>
 
-    <!-- Global Leaderboard Modal -->
-    <div id="leaderboard-modal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 500px; padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--neon-cyan); padding-bottom: 10px;">
-                <h2 class="font-orbitron" style="margin: 0; color: gold; text-shadow: 0 0 10px gold;">🏆 HALL OF FAME</h2>
-                <button onclick="closeGlobalLeaderboard()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 4px 4px 0 0; font-weight: bold; color: var(--neon-cyan); font-size: 0.9rem;">
-                <div style="flex:1; text-align:center;">RANK</div>
-                <div style="flex:1; text-align:center;">NAT</div>
-                <div style="flex:3; text-align:left; padding-left: 10px;">PILOT</div>
-                <div style="flex:2; text-align:right;">SCORE</div>
-            </div>
-            
-            <div id="leaderboard-list" style="max-height: 400px; overflow-y: auto; background: rgba(0,0,0,0.5); border-radius: 0 0 4px 4px;">
-                <!-- Ranks will be injected here -->
-            </div>
-        </div>
-    </div>
+    
 
 </body>
 </html>
