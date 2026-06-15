@@ -1569,7 +1569,9 @@ body {
     border: 1.5px solid rgba(0, 243, 255, 0.3);
     box-shadow: 0 0 10px rgba(0, 243, 255, 0.15), inset 0 0 5px rgba(0, 0, 0, 0.5);
     border-radius: 20px;
-    padding: 6px 15px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 0 15px;
     pointer-events: none; /* 터치 이벤트 통과 */
 }
 
@@ -1604,7 +1606,9 @@ body {
     .mobile-game-hud {
         top: 10px;
         width: calc(100% - 90px);
-        padding: 4px 12px;
+        height: 32px;
+        box-sizing: border-box;
+        padding: 0 12px;
     }
     .mobile-game-hud .hud-value {
         font-size: 0.75rem;

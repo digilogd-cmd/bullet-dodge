@@ -1752,8 +1752,8 @@ function gameLoop() {
         // Floating texts (+1₵ popup effect)
         updateAndDrawFloatingTexts();
         
-        // 캔버스 HUD 직접 그리기 (모바일 해상도 왜곡 대응 및 오버레이 가려짐 문제 영구 해결)
-        drawInGameCanvasHUD();
+        // drawInGameCanvasHUD(); // Removed to prevent overlapping with HTML HUD
+
 
     } else if (gameState === STATE_GAMEOVER) {
         updateParticles();
