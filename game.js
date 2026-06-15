@@ -1,3 +1,10 @@
+
+// ==========================================
+// Performance Optimization (Graphics)
+// ==========================================
+const isWebViewEnv = /wv|KakaoTalk|KAKAOTALK|naver|NAVER|Instagram|Line/i.test(navigator.userAgent) || typeof Android !== 'undefined';
+const LOW_GRAPHICS = isWebViewEnv; // Disable expensive shadowBlur in WebViews
+
 /**
  * Retro Cyber Avoid - game.js (V2 Monetization & Upgrades Update)
  * 8-bit Synth Audio, Parallax Starfield, Upgradable Stats, Ship Hangar Shop, Coin Magnet, Mock Rewarded Ads, Revive Loop
@@ -705,7 +712,7 @@ class Player {
         // A. Draw Invincibility Shield bubble
         if (this.isShielded) {
             ctx.save();
-            ctx.shadowBlur = 15 + Math.sin(Date.now() * 0.015) * 5;
+            ctx.shadowBlur = LOW_GRAPHICS ? 0 : (15 + Math.sin(Date.now() * 0.015) * 5);
             ctx.shadowColor = '#00f3ff';
             ctx.strokeStyle = 'rgba(0, 243, 255, 0.8)';
             ctx.lineWidth = 3.0;
@@ -719,7 +726,7 @@ class Player {
         }
 
         // B. Ship Body - Distinct paths based on equipped skin/model
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (12);
         ctx.shadowColor = this.damageFlash > 0 ? '#ff007f' : (this.isShielded ? '#00f3ff' : this.color);
 
         ctx.strokeStyle = this.damageFlash > 0 ? '#ff0055' : (this.isShielded ? '#00f3ff' : this.color);
@@ -863,7 +870,7 @@ class Player {
             // 사이버 그린 고글 (왼쪽 눈 위치)
             ctx.fillStyle = 'rgba(57, 255, 20, 0.85)';
             ctx.shadowColor = '#39ff14';
-            ctx.shadowBlur = 4;
+            ctx.shadowBlur = LOW_GRAPHICS ? 0 : (4);
             ctx.fillRect(-7, -9, 6, 6); // 네온 그린 렌즈
             ctx.strokeStyle = '#39ff14';
             ctx.lineWidth = 1.0;
@@ -913,7 +920,7 @@ class Player {
         ctx.closePath();
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#ffffff';
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (6);
         ctx.fill();
 
         // Hitbox center indicator
@@ -921,7 +928,7 @@ class Player {
         ctx.arc(0, 0, this.hitboxRadius, 0, Math.PI * 2);
         ctx.fillStyle = '#fffb00';
         ctx.shadowColor = '#fffb00';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (8);
         ctx.fill();
 
         ctx.restore();
@@ -952,7 +959,7 @@ class ShieldItem {
     draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.shadowBlur = 12 + Math.sin(this.pulse) * 4;
+        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (12 + Math.sin(this.pulse) * 4);
         ctx.shadowColor = this.color;
 
         ctx.strokeStyle = this.color;
@@ -1035,7 +1042,7 @@ class CoinItem {
     draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.shadowBlur = 12 + Math.sin(this.pulse) * 4;
+        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (12 + Math.sin(this.pulse) * 4);
         ctx.shadowColor = this.color;
 
         ctx.strokeStyle = this.color;
@@ -1156,7 +1163,7 @@ class Bullet {
 
     draw() {
         ctx.save();
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (10);
         ctx.shadowColor = this.shadowColor;
         ctx.fillStyle = this.color;
         
@@ -1210,7 +1217,7 @@ class WarningLine {
         ctx.lineWidth = 2.5;
         ctx.setLineDash([8, 8]);
         ctx.shadowColor = 'rgb(255, 0, 127)';
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (6);
         
         ctx.beginPath();
         ctx.moveTo(this.x, 0);
@@ -1266,7 +1273,7 @@ function drawStars() {
     ctx.save();
     stars.forEach(star => {
         ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-        ctx.shadowBlur = star.size > 2.0 ? 5 : 0;
+        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (star.size > 2.0 ? 5 : 0);
         ctx.shadowColor = '#ffffff';
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
@@ -1329,7 +1336,7 @@ function updateAndDrawFloatingTexts() {
     ctx.save();
     ctx.font = '900 10px Orbitron';
     ctx.textAlign = 'center';
-    ctx.shadowBlur = 5;
+    ctx.shadowBlur = LOW_GRAPHICS ? 0 : (5);
     ctx.shadowColor = '#fffb00';
     
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
@@ -1890,7 +1897,7 @@ function drawInGameCanvasHUD() {
     ctx.textBaseline = 'middle';
     
     // [좌측] 레벨 표시
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = LOW_GRAPHICS ? 0 : (8);
     ctx.shadowColor = '#00f3ff';
     ctx.fillStyle = '#00f3ff';
     ctx.textAlign = 'left';
@@ -1936,7 +1943,7 @@ function drawInGameCanvasHUD() {
         }
         
         if (!blink) {
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = LOW_GRAPHICS ? 0 : (10);
             ctx.shadowColor = '#00f3ff';
             ctx.fillRect(barX, barY, fillW, barH);
         }
