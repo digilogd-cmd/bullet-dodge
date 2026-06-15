@@ -1714,7 +1714,24 @@ function triggerGameOver() {
 // ----------------------------------------------------
 // 11. MAIN CORE ANIMATION FRAME LOOP (60 FPS)
 // ----------------------------------------------------
-function gameLoop() {
+
+// --- FPS Targeting ---
+let lastFrameTime = 0;
+const FPS_LIMIT = 30;
+const FRAME_MIN_TIME = (1000/60) * (60/FPS_LIMIT) - (1000/60) * 0.5;
+// ---------------------
+
+function gameLoop(timestamp) {
+    if (!lastFrameTime) lastFrameTime = timestamp;
+    
+    if (LOW_GRAPHICS) {
+        if (timestamp - lastFrameTime < 32) {
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+        lastFrameTime = timestamp;
+    }
+    
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     updateStars();
