@@ -2717,14 +2717,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof Android !== 'undefined') {
         
         // Bilingual UI for Android
-        const titleH1 = document.querySelector('.main-header h1.glow-text');
-        const subtitleP = document.querySelector('.main-header p.subtitle');
-        const overlayTitle = document.querySelector('#overlay-start h2.arcade-title');
+        const overlayDesc = document.querySelector('#overlay-start .overlay-desc');
         
-        if (titleH1) titleH1.innerHTML = 'CYBER AVOID <span style="font-size:0.6em; color:#a0a0ff;">/ 사이버 어보이드</span>';
-        if (subtitleP) subtitleP.innerHTML = 'RETRO DODGE GAME <span style="font-size:0.8em; color:#a0a0ff;">/ 레트로 닷지 게임</span>';
-        if (overlayTitle) overlayTitle.innerHTML = 'RETRO DODGE <span style="font-size:0.6em; color:#a0a0ff;">/ 레트로 닷지</span>';
-        
+        if (overlayDesc) {
+            overlayDesc.innerHTML = '총알을 피해 살아남으십시오.<br>코인을 모아 기체를 업그레이드하세요.<br><br><span style="font-size:0.8em; color:#a0a0ff;">Survive by dodging bullets.<br>Collect coins to upgrade your ship.</span>';
+        }
+
         const webPayment = document.getElementById('web-payment-container');
         const paypalPayment = document.getElementById('paypal-button-container');
         const appPayment = document.getElementById('app-payment-container');
