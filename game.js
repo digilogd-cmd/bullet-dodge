@@ -2216,7 +2216,7 @@ packageCards.forEach(card => {
 });
 
 // Portone 국내 간편 결제 요청 처리 (비동기)
-async function requestPortonePayment(targetChannelKey) {
+async function requestPortonePayment(targetChannelKey, targetPayMethod = "EASY_PAY") {
     if (typeof PortOne === 'undefined') {
         console.error("PortOne SDK를 로드할 수 없습니다.");
         alert("국내 결제 모듈 로드 실패. 새로고침 후 다시 시도해 주세요.");
@@ -2237,7 +2237,7 @@ async function requestPortonePayment(targetChannelKey) {
             totalAmount: amountKRW,
             currency: "CURRENCY_KRW",
             channelKey: targetChannelKey,
-            payMethod: "EASY_PAY"
+            payMethod: targetPayMethod
         });
         
         // 결제 실패 처리
@@ -2469,7 +2469,7 @@ document.getElementById('btn-kakaopay')?.addEventListener('click', () => {
 // 토스페이먼츠 결제 버튼 클릭 리스너 연결
 document.getElementById('btn-tosspay')?.addEventListener('click', () => {
     SFX.playBeep();
-    requestPortonePayment("channel-key-8c83efa9-2297-407f-9f09-576ca66e0639"); // 토스페이먼츠 채널 키
+    requestPortonePayment("channel-key-8c83efa9-2297-407f-9f09-576ca66e0639", "CARD"); // 토스페이먼츠 채널 키
 });
 
 // Sound toggling
