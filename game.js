@@ -1275,9 +1275,14 @@ function drawStars() {
         ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
         ctx.shadowBlur = LOW_GRAPHICS ? 0 : (star.size > 2.0 ? 5 : 0);
         ctx.shadowColor = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
+        if (LOW_GRAPHICS) {
+            const s = star.size * 2;
+            ctx.fillRect(star.x - s/2, star.y - s/2, s, s);
+        } else {
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
     });
     ctx.restore();
 }
@@ -1313,9 +1318,14 @@ function drawParticles() {
         ctx.fillStyle = p.color;
         ctx.globalAlpha = alpha;
         
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 2 + (1.5 * alpha), 0, Math.PI * 2);
-        ctx.fill();
+        if (LOW_GRAPHICS) {
+            const s = (2 + (1.5 * alpha)) * 2;
+            ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+        } else {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2 + (1.5 * alpha), 0, Math.PI * 2);
+            ctx.fill();
+        }
     });
     ctx.restore();
 }
