@@ -38,7 +38,7 @@ class SoundEngine {
     toggleMute() {
         this.isMuted = !this.isMuted;
         if (this.bgmVolumeNode) {
-            this.bgmVolumeNode.gain.setValueAtTime(this.isMuted ? 0 : 0.15, this.ctx.currentTime);
+            this.bgmVolumeNode.gain.setValueAtTime(this.isMuted ? 0 : 0.40, this.ctx.currentTime);
         }
         return this.isMuted;
     }
@@ -56,7 +56,7 @@ class SoundEngine {
         
         // Core BGM output gain node
         this.bgmVolumeNode = this.ctx.createGain();
-        this.bgmVolumeNode.gain.setValueAtTime(this.isMuted ? 0 : 0.15, this.ctx.currentTime);
+        this.bgmVolumeNode.gain.setValueAtTime(this.isMuted ? 0 : 0.40, this.ctx.currentTime);
         this.bgmVolumeNode.connect(this.ctx.destination);
         
         this.currentBeat = 0;
