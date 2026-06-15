@@ -2461,15 +2461,16 @@ function enableTiltControl() {
 }
 
 // 카카오페이 결제 버튼 클릭 리스너 연결
-document.getElementById('btn-kakaopay')?.addEventListener('click', () => {
-    SFX.playBeep();
-    requestPortonePayment("channel-key-eabcf03a-193b-4af1-888e-c3be6852716d"); // 카카오페이 채널 키
-});
+
 
 // 토스페이먼츠 결제 버튼 클릭 리스너 연결
-document.getElementById('btn-tosspay')?.addEventListener('click', () => {
+document.getElementById('btn-iap-purchase')?.addEventListener('click', () => {
     SFX.playBeep();
-    requestPortonePayment("channel-key-8c83efa9-2297-407f-9f09-576ca66e0639", "CARD"); // 토스페이먼츠 채널 키
+    if (typeof Android !== 'undefined') {
+        Android.purchaseSkin(selectedPackagePrice === '0.99' ? 'starter_pack' : 'booster_pack');
+    } else {
+        alert('이 기능은 모바일 안드로이드 앱에서만 지원됩니다.');
+    }
 });
 
 // Sound toggling
@@ -2685,3 +2686,17 @@ window.addEventListener('popstate', function (event) {
         history.pushState(null, null, location.href);
     }
 });
+
+
+// Android Native Bridge Callback
+window.onNativePurchaseSuccess = function(sku) {
+    if (sku === 'starter_pack') {
+        totalCoins += 1000;
+        alert('스타터 팩 구매가 완료되었습니다! (1000 코인 획득)');
+    } else {
+        totalCoins += 5000;
+        alert('부스터 팩 구매가 완료되었습니다! (5000 코인 획득)');
+    }
+    localStorage.setItem('cyber_avoid_coins', totalCoins);
+    updateShopUI();
+};

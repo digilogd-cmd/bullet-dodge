@@ -15,8 +15,7 @@
     <link rel="stylesheet" href="style.css?v=4.3">
     <!-- PayPal SDK (개발/테스트 시에는 client-id=sb, 실 결제 Live 전환 시에는 발급된 실서버 Client ID로 교체합니다) -->
     <script src="https://www.paypal.com/sdk/js?client-id=AeK3dPx2ju4g9zZZtLzdmkRMypHkFmSqtGSy13C00nX35Gx9G32FprXYoX6FH1l44V0OinF5XB1NiZXy&currency=USD&disable-funding=credit,card"></script>
-    <!-- Portone SDK (국내 카드 및 간편결제 연동용) -->
-    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+    <!-- Removed PortOne SDK -->
     <!-- 구글 애드센스 공식 연동 스크립트 (대표님의 ca-pub ID로 대체해서 사용 가능) -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXX" crossorigin="anonymous"></script>
 
@@ -149,7 +148,8 @@
                     <div class="overlay-content">
                         <h2 class="arcade-title pulse-glow">RETRO DODGE</h2>
                         <p class="overlay-desc">총알을 피해 살아남으십시오.<br>코인을 모아 기체를 업그레이드하세요.</p>
-                        <button id="btn-start" class="neon-btn font-orbitron">MISSION START</button>
+                        <button id="btn-leaderboard" class="font-orbitron" style="display: block; margin: 10px auto; padding: 12px 30px; font-size: 1.2rem; font-weight: 700; color: #FFF; background-color: transparent; border: 2px solid gold; border-radius: 4px; cursor: pointer; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); text-transform: uppercase; transition: all 0.3s;" onclick="showGlobalLeaderboard()">🏆 GLOBAL LEADERBOARD</button>
+            <button id="btn-start" class="neon-btn font-orbitron">MISSION START</button>
                         <button id="btn-open-hangar" class="neon-btn btn-pink font-orbitron" style="margin-top: 10px; width: 220px; font-size: 0.8rem; padding: 10px 0;">HANGAR / SHOP</button>
                         
                         <!-- 시작 화면 하단 구글 애드센스 광고 (디스플레이 300x100) -->
@@ -258,8 +258,7 @@
                             
                             <!-- 국내 결제 버튼 (Portone) -->
                             <div style="display: flex; gap: 8px; margin-top: 10px; margin-bottom: 5px;">
-                                <button id="btn-kakaopay" class="font-orbitron" style="flex: 1; padding: 12px 0; font-size: 0.75rem; font-weight: 700; background-color: #FEE500; color: #191919; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 0 10px rgba(254, 229, 0, 0.4); text-align: center;">💬 카카오페이</button>
-                                <button id="btn-tosspay" class="font-orbitron" style="flex: 1; padding: 12px 0; font-size: 0.75rem; font-weight: 700; background-color: #3182F6; color: #FFFFFF; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 0 10px rgba(49, 130, 246, 0.4); text-align: center;">🔵 토스페이</button>
+                                <button id="btn-iap-purchase" class="font-orbitron" style="flex: 1; padding: 12px 0; font-size: 0.8rem; font-weight: 700; background-color: #3DDC84; color: #FFFFFF; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 0 10px rgba(61, 220, 132, 0.4); text-align: center;">🛒 구글 플레이 결제</button>
                             </div>
                             
                             <!-- PayPal Smart Buttons Container -->
@@ -485,5 +484,27 @@
     <script src="auth.js?v=4.3"></script>
     <!-- 게임 스크립트 연결 (캐시 버스팅 연동) -->
     <script src="game.js?v=4.3"></script>
+
+    <!-- Global Leaderboard Modal -->
+    <div id="leaderboard-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--neon-cyan); padding-bottom: 10px;">
+                <h2 class="font-orbitron" style="margin: 0; color: gold; text-shadow: 0 0 10px gold;">🏆 HALL OF FAME</h2>
+                <button onclick="closeGlobalLeaderboard()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 4px 4px 0 0; font-weight: bold; color: var(--neon-cyan); font-size: 0.9rem;">
+                <div style="flex:1; text-align:center;">RANK</div>
+                <div style="flex:1; text-align:center;">NAT</div>
+                <div style="flex:3; text-align:left; padding-left: 10px;">PILOT</div>
+                <div style="flex:2; text-align:right;">SCORE</div>
+            </div>
+            
+            <div id="leaderboard-list" style="max-height: 400px; overflow-y: auto; background: rgba(0,0,0,0.5); border-radius: 0 0 4px 4px;">
+                <!-- Ranks will be injected here -->
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

@@ -9,12 +9,13 @@
 // 대표님! 구글 Firebase 콘솔(https://console.firebase.google.com/)에서 프로젝트 생성 후 
 // 아래의 설정을 대표님의 프로젝트 정보로 변경해주시면 즉시 클라우드에 연동되어 영구 저장됩니다.
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY_HERE",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDU344sU3r92yaTCkZKm7i5ZEXV5ylVmgI",
+  authDomain: "bullet-dodge-8d235.firebaseapp.com",
+  projectId: "bullet-dodge-8d235",
+  storageBucket: "bullet-dodge-8d235.firebasestorage.app",
+  messagingSenderId: "251977968081",
+  appId: "1:251977968081:web:c84346ddc76844d11298f0",
+  measurementId: "G-4N86KFVB2S"
 };
 
 let db = null;
@@ -233,6 +234,10 @@ async function syncGameDataToCloud() {
         const localHighScore = parseInt(localStorage.getItem('cyber_avoid_highscore')) || 0;
 
         await db.collection('pilots').doc(currentUser.uid).set({
+            displayName: currentUser.displayName || currentUser.email.split('@')[0],
+            photoURL: currentUser.photoURL || '',
+            countryCode: typeof userCountryCode !== 'undefined' ? userCountryCode : 'US',
+            countryFlag: typeof userCountryFlag !== 'undefined' ? userCountryFlag : '🏳️',
             gameData: {
                 coins: localCoins,
                 unlockedShips: localUnlocked,
@@ -434,3 +439,122 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+// ============================================================================
+// 6. Global Leaderboard & Country Tracking
+// ============================================================================
+
+// 유저 접속 위치(국가) 파악 변수
+let userCountryCode = 'US';
+let userCountryFlag = '🏳️';
+
+// 국가 코드를 국기 이모지로 변환
+function getFlagEmoji(countryCode) {
+    if (!countryCode) return '🏳️';
+    const codePoints = countryCode.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+}
+
+// IP 기반 국가 코드 가져오기
+async function fetchUserCountry() {
+    try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        if (data.country_code) {
+            userCountryCode = data.country_code;
+            userCountryFlag = getFlagEmoji(userCountryCode);
+            console.log("🌍 접속 국가 파악 완료:", userCountryCode, userCountryFlag);
+        }
+    } catch (e) {
+        console.log("국가 정보를 가져올 수 없습니다. 기본값 처리.");
+    }
+}
+
+// 처음 로드 시 국가 정보 가져오기 시도
+fetchUserCountry();
+
+// 명예의 전당 (리더보드) 불러오기 함수
+window.showGlobalLeaderboard = async function() {
+    const modal = document.getElementById('leaderboard-modal');
+    const listBody = document.getElementById('leaderboard-list');
+    
+    if (!db || isMockAuth) {
+        alert("데이터베이스 연결이 필요합니다. 구글 로그인을 진행해주세요!");
+        return;
+    }
+    
+    modal.classList.add('active');
+    listBody.innerHTML = '<div style="text-align:center; padding:20px; color:#00F3FF;">Fetching Global Data...</div>';
+    
+    try {
+        // highScore 기준으로 내림차순 100명 가져오기
+        const snapshot = await db.collection('pilots')
+                                 .orderBy('gameData.highScore', 'desc')
+                                 .limit(100)
+                                 .get();
+        
+        if (snapshot.empty) {
+            listBody.innerHTML = '<div style="text-align:center; padding:20px;">아직 기록이 없습니다! 첫 번째 랭커가 되세요!</div>';
+            return;
+        }
+        
+        let html = '';
+        let rank = 1;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const score = data.gameData ? data.gameData.highScore || 0 : 0;
+            const name = data.displayName || 'Anonymous Pilot';
+            const flag = data.countryFlag || '🏳️';
+            const isMe = (auth.currentUser && doc.id === auth.currentUser.uid);
+            
+            let rankStyle = 'color: white;';
+            if (rank === 1) rankStyle = 'color: gold; font-weight: bold; text-shadow: 0 0 10px gold; font-size: 1.2rem;';
+            else if (rank === 2) rankStyle = 'color: silver; font-weight: bold;';
+            else if (rank === 3) rankStyle = 'color: #cd7f32; font-weight: bold;'; // Bronze
+            
+            let rowBg = isMe ? 'background: rgba(0, 243, 255, 0.2); border: 1px solid var(--neon-cyan);' : 'border-bottom: 1px solid rgba(255,255,255,0.1);';
+            
+            html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 12px 10px; ${rowBg}">
+                    <div style="flex:1; text-align:center; ${rankStyle}">${rank}</div>
+                    <div style="flex:1; text-align:center; font-size: 1.5rem;">${flag}</div>
+                    <div style="flex:3; text-align:left; font-family: 'Orbitron', sans-serif; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 10px;">${name}</div>
+                    <div style="flex:2; text-align:right; font-family: 'Orbitron', sans-serif; color: var(--neon-green);">${score.toLocaleString()}</div>
+                </div>
+            `;
+            rank++;
+        });
+        
+        // 내 랭킹 계산 및 하단 고정 UI 추가
+        if (auth.currentUser) {
+            const myScore = parseInt(localStorage.getItem('cyber_avoid_highscore')) || 0;
+            // 내 점수보다 높은 사람 수 계산 (최대 1000명까지만 탐색하여 서버 부하 방지)
+            const querySnap = await db.collection('pilots').where('gameData.highScore', '>', myScore).limit(1000).get();
+            let myEstimatedRank = querySnap.size + 1;
+            let rankText = myEstimatedRank > 1000 ? "1000+ 등" : `${myEstimatedRank} 등`;
+            
+            html += `
+                <div style="position: sticky; bottom: 0; background: rgba(0,20,20,0.95); border-top: 2px solid var(--neon-cyan); padding: 15px 10px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 -5px 15px rgba(0,243,255,0.2);">
+                    <div style="flex:1; text-align:center; color:var(--neon-cyan); font-weight:bold; font-size: 0.9rem;">MY RANK</div>
+                    <div style="flex:1; text-align:center; font-size: 1.5rem;">${typeof userCountryFlag !== 'undefined' ? userCountryFlag : '🏳️'}</div>
+                    <div style="flex:3; text-align:left; font-family: 'Orbitron', sans-serif; color:white; padding-left:10px; font-weight:bold; text-transform: uppercase;">${auth.currentUser.displayName || auth.currentUser.email.split('@')[0]}</div>
+                    <div style="flex:2; text-align:right; display:flex; flex-direction:column; line-height:1.2;">
+                        <span style="font-family:'Orbitron',sans-serif; color:var(--neon-cyan); font-weight:bold;">${myScore.toLocaleString()}</span>
+                        <span style="font-size:0.8rem; color:gold;">(${rankText})</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        listBody.innerHTML = html;
+        
+    } catch (e) {
+        console.error("리더보드 로드 실패:", e);
+        listBody.innerHTML = `<div style="text-align:center; padding:20px; color:red;">랭킹을 불러오는데 실패했습니다.<br><small>${e.message}</small></div>`;
+    }
+};
+
+window.closeGlobalLeaderboard = function() {
+    document.getElementById('leaderboard-modal').classList.remove('active');
+};
