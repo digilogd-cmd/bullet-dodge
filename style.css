@@ -1559,8 +1559,8 @@ body {
     top: 15px;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
-    max-width: 400px;
+    width: calc(100% - 110px);
+    max-width: 380px;
     display: none; /* 기본 숨김 - JS로 게임 중에만 flex로 전환 */
     justify-content: space-between;
     align-items: center;
@@ -1603,7 +1603,7 @@ body {
 @media (max-width: 480px) {
     .mobile-game-hud {
         top: 10px;
-        width: 86%;
+        width: calc(100% - 90px);
         padding: 4px 12px;
     }
     .mobile-game-hud .hud-value {

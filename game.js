@@ -2700,3 +2700,44 @@ window.onNativePurchaseSuccess = function(sku) {
     localStorage.setItem('cyber_avoid_coins', totalCoins);
     updateShopUI();
 };
+
+
+// ==========================================
+// Android Native UI Detection
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // If Android JS bridge exists
+    if (typeof Android !== 'undefined') {
+        const webPayment = document.getElementById('web-payment-container');
+        const paypalPayment = document.getElementById('paypal-button-container');
+        const appPayment = document.getElementById('app-payment-container');
+        
+        if (webPayment) webPayment.style.display = 'none';
+        if (paypalPayment) paypalPayment.style.display = 'none';
+        if (appPayment) appPayment.style.display = 'flex';
+        
+        const btnIap = document.getElementById('btn-iap-purchase');
+        if (btnIap) {
+            btnIap.addEventListener('click', () => {
+                // Determine which pack is selected
+                let selectedSku = 'pack_5000'; // Default
+                if (selectedCreditPack === 12000) selectedSku = 'pack_12000';
+                
+                Android.purchaseSkin(selectedSku);
+            });
+        }
+    }
+});
+
+// Callback triggered by Android upon successful purchase
+window.onNativePurchaseSuccess = function(sku) {
+    if (sku === 'pack_5000') {
+        playerCoins += 5000;
+        alert("5,000 Credits Acquired!");
+    } else if (sku === 'pack_12000') {
+        playerCoins += 12000;
+        alert("12,000 Credits Acquired!");
+    }
+    updateCoinDisplay();
+    saveData();
+};
