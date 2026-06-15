@@ -2672,3 +2672,16 @@ if (btnPauseTrigger) {
 }
 
 requestAnimationFrame(gameLoop);
+
+
+// 모바일 뒤로가기 버튼 실수 방지 로직 (popstate 인터셉트)
+history.pushState(null, null, location.href);
+window.addEventListener('popstate', function (event) {
+    if (confirm("정말 종료하시겠습니까?\n진행 중인 게임 데이터가 저장되지 않을 수 있습니다.")) {
+        // 확인 시, 실제로 페이지를 벗어나도록 다시 뒤로가기
+        history.go(-1);
+    } else {
+        // 취소 시, 현재 페이지 상태 유지 (다시 상태 푸시)
+        history.pushState(null, null, location.href);
+    }
+});

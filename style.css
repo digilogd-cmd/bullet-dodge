@@ -1666,11 +1666,11 @@ body {
 
 @media (max-width: 480px) {
     .btn-pause-trigger {
-        top: 10px;
-        right: 10px;
-        width: 42px;
-        height: 42px;
-        font-size: 1.1rem;
+        top: 8px;
+        right: 5px;
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
     }
 
     /* 🐕 모바일 환경 상점/격납고 오버레이 극한 최적화 (짤림 방지 및 터치 스크롤 복구) */
