@@ -2715,6 +2715,16 @@ window.onNativePurchaseSuccess = function(sku) {
 document.addEventListener('DOMContentLoaded', () => {
     // If Android JS bridge exists
     if (typeof Android !== 'undefined') {
+        
+        // Bilingual UI for Android
+        const titleH1 = document.querySelector('.main-header h1.glow-text');
+        const subtitleP = document.querySelector('.main-header p.subtitle');
+        const overlayTitle = document.querySelector('#overlay-start h2.arcade-title');
+        
+        if (titleH1) titleH1.innerHTML = 'CYBER AVOID <span style="font-size:0.6em; color:#a0a0ff;">/ 사이버 어보이드</span>';
+        if (subtitleP) subtitleP.innerHTML = 'RETRO DODGE GAME <span style="font-size:0.8em; color:#a0a0ff;">/ 레트로 닷지 게임</span>';
+        if (overlayTitle) overlayTitle.innerHTML = 'RETRO DODGE <span style="font-size:0.6em; color:#a0a0ff;">/ 레트로 닷지</span>';
+        
         const webPayment = document.getElementById('web-payment-container');
         const paypalPayment = document.getElementById('paypal-button-container');
         const appPayment = document.getElementById('app-payment-container');
