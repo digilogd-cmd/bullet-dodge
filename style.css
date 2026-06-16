@@ -779,18 +779,6 @@ body {
         max-width: 380px;
         padding: 10px;
     }
-    
-    .canvas-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0;
-        border: none;
-        background-color: #000000;
-        z-index: 9999;
-    }
 }
 
 /* ----------------------------------------------------
