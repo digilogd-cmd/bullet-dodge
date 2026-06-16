@@ -2723,13 +2723,20 @@ window.addEventListener('popstate', function (event) {
 
 
 // Android Native Bridge Callback
+// Android Native Bridge Callback (통합: 모든 SKU 처리)
 window.onNativePurchaseSuccess = function(sku) {
     if (sku === 'starter_pack') {
         totalCoins += 1000;
-        alert('스타터 팩 구매가 완료되었습니다! (1000 코인 획득)');
+        alert('스타터 팩 구매 완료! (1,000 코인 획득)');
+    } else if (sku === 'pack_5000') {
+        totalCoins += 5000;
+        alert('5,000 Credits Acquired!');
+    } else if (sku === 'pack_12000') {
+        totalCoins += 12000;
+        alert('12,000 Credits Acquired!');
     } else {
         totalCoins += 5000;
-        alert('부스터 팩 구매가 완료되었습니다! (5000 코인 획득)');
+        alert('부스터 팩 구매 완료! (5,000 코인 획득)');
     }
     localStorage.setItem('cyber_avoid_coins', totalCoins);
     updateShopUI();
@@ -2771,15 +2778,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Callback triggered by Android upon successful purchase
-window.onNativePurchaseSuccess = function(sku) {
-    if (sku === 'pack_5000') {
-        playerCoins += 5000;
-        alert("5,000 Credits Acquired!");
-    } else if (sku === 'pack_12000') {
-        playerCoins += 12000;
-        alert("12,000 Credits Acquired!");
-    }
-    updateCoinDisplay();
-    saveData();
-};
