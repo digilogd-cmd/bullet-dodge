@@ -783,14 +783,12 @@ body {
     }
     
     .canvas-container {
-    position: relative;
-    width: 450px;
-    height: 750px;
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid rgba(0, 243, 255, 0.2);
-    background-color: #000000;
-}
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+        background-color: #000000;
+    }
 }
 
 /* ----------------------------------------------------
