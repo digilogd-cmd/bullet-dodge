@@ -25,7 +25,7 @@
             errDiv.style.zIndex = '999999';
             errDiv.style.padding = '10px';
             errDiv.innerHTML = 'Error: ' + msg + '<br>Line: ' + lineNo;
-            document.body.appendChild(errDiv);
+            (document.body || document.documentElement).appendChild(errDiv);
             return false;
         };
     </script>
