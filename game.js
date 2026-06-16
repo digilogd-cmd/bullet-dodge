@@ -1,10 +1,3 @@
-
-// ==========================================
-// Performance Optimization (Graphics)
-// ==========================================
-const isWebViewEnv = /wv|KakaoTalk|KAKAOTALK|naver|NAVER|Instagram|Line/i.test(navigator.userAgent) || typeof Android !== 'undefined';
-const LOW_GRAPHICS = isWebViewEnv; // Disable expensive shadowBlur in WebViews
-
 /**
  * Retro Cyber Avoid - game.js (V2 Monetization & Upgrades Update)
  * 8-bit Synth Audio, Parallax Starfield, Upgradable Stats, Ship Hangar Shop, Coin Magnet, Mock Rewarded Ads, Revive Loop
@@ -38,7 +31,7 @@ class SoundEngine {
     toggleMute() {
         this.isMuted = !this.isMuted;
         if (this.bgmVolumeNode) {
-            this.bgmVolumeNode.gain.setValueAtTime(this.isMuted ? 0 : 0.40, this.ctx.currentTime);
+            this.bgmVolumeNode.gain.setValueAtTime(this.isMuted ? 0 : 0.15, this.ctx.currentTime);
         }
         return this.isMuted;
     }
@@ -56,7 +49,7 @@ class SoundEngine {
         
         // Core BGM output gain node
         this.bgmVolumeNode = this.ctx.createGain();
-        this.bgmVolumeNode.gain.setValueAtTime(this.isMuted ? 0 : 0.40, this.ctx.currentTime);
+        this.bgmVolumeNode.gain.setValueAtTime(this.isMuted ? 0 : 0.15, this.ctx.currentTime);
         this.bgmVolumeNode.connect(this.ctx.destination);
         
         this.currentBeat = 0;
@@ -455,7 +448,6 @@ const summaryScore = document.getElementById('summary-score');
 const mobileGameHud = document.getElementById('mobile-game-hud');
 const hudLevelVal  = document.getElementById('hud-level-val');
 const hudShieldVal = document.getElementById('hud-shield-val');
-const hudShieldFill = document.getElementById('hud-shield-fill'); // 🛡 실드 바 그래프
 const hudTimeVal   = document.getElementById('hud-time-val');
 
 // 모바일 HUD 표시/숨김 함수
@@ -712,7 +704,7 @@ class Player {
         // A. Draw Invincibility Shield bubble
         if (this.isShielded) {
             ctx.save();
-            ctx.shadowBlur = LOW_GRAPHICS ? 0 : (15 + Math.sin(Date.now() * 0.015) * 5);
+            ctx.shadowBlur = 15 + Math.sin(Date.now() * 0.015) * 5;
             ctx.shadowColor = '#00f3ff';
             ctx.strokeStyle = 'rgba(0, 243, 255, 0.8)';
             ctx.lineWidth = 3.0;
@@ -726,7 +718,7 @@ class Player {
         }
 
         // B. Ship Body - Distinct paths based on equipped skin/model
-        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (12);
+        ctx.shadowBlur = 12;
         ctx.shadowColor = this.damageFlash > 0 ? '#ff007f' : (this.isShielded ? '#00f3ff' : this.color);
 
         ctx.strokeStyle = this.damageFlash > 0 ? '#ff0055' : (this.isShielded ? '#00f3ff' : this.color);
@@ -870,7 +862,7 @@ class Player {
             // 사이버 그린 고글 (왼쪽 눈 위치)
             ctx.fillStyle = 'rgba(57, 255, 20, 0.85)';
             ctx.shadowColor = '#39ff14';
-            ctx.shadowBlur = LOW_GRAPHICS ? 0 : (4);
+            ctx.shadowBlur = 4;
             ctx.fillRect(-7, -9, 6, 6); // 네온 그린 렌즈
             ctx.strokeStyle = '#39ff14';
             ctx.lineWidth = 1.0;
@@ -920,7 +912,7 @@ class Player {
         ctx.closePath();
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#ffffff';
-        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (6);
+        ctx.shadowBlur = 6;
         ctx.fill();
 
         // Hitbox center indicator
@@ -928,7 +920,7 @@ class Player {
         ctx.arc(0, 0, this.hitboxRadius, 0, Math.PI * 2);
         ctx.fillStyle = '#fffb00';
         ctx.shadowColor = '#fffb00';
-        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (8);
+        ctx.shadowBlur = 8;
         ctx.fill();
 
         ctx.restore();
@@ -959,7 +951,7 @@ class ShieldItem {
     draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (12 + Math.sin(this.pulse) * 4);
+        ctx.shadowBlur = 12 + Math.sin(this.pulse) * 4;
         ctx.shadowColor = this.color;
 
         ctx.strokeStyle = this.color;
@@ -1042,7 +1034,7 @@ class CoinItem {
     draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (12 + Math.sin(this.pulse) * 4);
+        ctx.shadowBlur = 12 + Math.sin(this.pulse) * 4;
         ctx.shadowColor = this.color;
 
         ctx.strokeStyle = this.color;
@@ -1163,7 +1155,7 @@ class Bullet {
 
     draw() {
         ctx.save();
-        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (10);
+        ctx.shadowBlur = 10;
         ctx.shadowColor = this.shadowColor;
         ctx.fillStyle = this.color;
         
@@ -1217,7 +1209,7 @@ class WarningLine {
         ctx.lineWidth = 2.5;
         ctx.setLineDash([8, 8]);
         ctx.shadowColor = 'rgb(255, 0, 127)';
-        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (6);
+        ctx.shadowBlur = 6;
         
         ctx.beginPath();
         ctx.moveTo(this.x, 0);
@@ -1273,16 +1265,11 @@ function drawStars() {
     ctx.save();
     stars.forEach(star => {
         ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-        ctx.shadowBlur = LOW_GRAPHICS ? 0 : (star.size > 2.0 ? 5 : 0);
+        ctx.shadowBlur = star.size > 2.0 ? 5 : 0;
         ctx.shadowColor = '#ffffff';
-        if (LOW_GRAPHICS) {
-            const s = star.size * 2;
-            ctx.fillRect(star.x - s/2, star.y - s/2, s, s);
-        } else {
-            ctx.beginPath();
-            ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
     });
     ctx.restore();
 }
@@ -1318,14 +1305,9 @@ function drawParticles() {
         ctx.fillStyle = p.color;
         ctx.globalAlpha = alpha;
         
-        if (LOW_GRAPHICS) {
-            const s = (2 + (1.5 * alpha)) * 2;
-            ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
-        } else {
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, 2 + (1.5 * alpha), 0, Math.PI * 2);
-            ctx.fill();
-        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2 + (1.5 * alpha), 0, Math.PI * 2);
+        ctx.fill();
     });
     ctx.restore();
 }
@@ -1346,7 +1328,7 @@ function updateAndDrawFloatingTexts() {
     ctx.save();
     ctx.font = '900 10px Orbitron';
     ctx.textAlign = 'center';
-    ctx.shadowBlur = LOW_GRAPHICS ? 0 : (5);
+    ctx.shadowBlur = 5;
     ctx.shadowColor = '#fffb00';
     
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
@@ -1714,24 +1696,7 @@ function triggerGameOver() {
 // ----------------------------------------------------
 // 11. MAIN CORE ANIMATION FRAME LOOP (60 FPS)
 // ----------------------------------------------------
-
-// --- FPS Targeting ---
-let lastFrameTime = 0;
-const FPS_LIMIT = 30;
-const FRAME_MIN_TIME = (1000/60) * (60/FPS_LIMIT) - (1000/60) * 0.5;
-// ---------------------
-
-function gameLoop(timestamp) {
-    if (!lastFrameTime) lastFrameTime = timestamp;
-    
-    if (LOW_GRAPHICS) {
-        if (timestamp - lastFrameTime < 32) {
-            requestAnimationFrame(gameLoop);
-            return;
-        }
-        lastFrameTime = timestamp;
-    }
-    
+function gameLoop() {
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     updateStars();
@@ -1786,8 +1751,8 @@ function gameLoop(timestamp) {
         // Floating texts (+1₵ popup effect)
         updateAndDrawFloatingTexts();
         
-        // drawInGameCanvasHUD(); // Removed to prevent overlapping with HTML HUD
-
+        // 캔버스 HUD 직접 그리기 (모바일 해상도 왜곡 대응 및 오버레이 가려짐 문제 영구 해결)
+        drawInGameCanvasHUD();
 
     } else if (gameState === STATE_GAMEOVER) {
         updateParticles();
@@ -1865,34 +1830,9 @@ function updateHUD() {
     domCoins.innerText = String(totalCoins + sessionCoins).padStart(6, '0');
 
     // 📱 모바일 HUD 실시간 업데이트
-    if (hudLevelVal) hudLevelVal.innerText = level;
-
-    // 🛡 실드 바 그래프 업데이트
-    if (hudShieldVal || hudShieldFill) {
-        const shieldPct = player ? Math.max(0, Math.min(100, (shield / player.maxShield) * 100)) : 100;
-        if (hudShieldVal) hudShieldVal.innerText = Math.ceil(shieldPct) + '%';
-        if (hudShieldFill) {
-            hudShieldFill.style.width = shieldPct + '%';
-            if (player && player.isShielded) {
-                // 무적 실드 활성화: 시안+퍼플 강렬한 발광
-                hudShieldFill.style.background = 'linear-gradient(90deg, #00f3ff, #9d00ff)';
-                hudShieldFill.style.boxShadow  = '0 0 14px #00f3ff, 0 0 6px #9d00ff';
-                hudShieldFill.style.animation  = 'blink 0.2s infinite alternate';
-            } else if (shieldPct <= 30) {
-                // 위험 구간: 빨간 경고 바 + 깜빡임
-                hudShieldFill.style.background = 'linear-gradient(90deg, #ff003c, #ff6a00)';
-                hudShieldFill.style.boxShadow  = '0 0 10px #ff003c';
-                hudShieldFill.style.animation  = 'blink 0.45s infinite alternate';
-            } else {
-                // 정상: 시안→퍼플 그라데이션
-                hudShieldFill.style.background = 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))';
-                hudShieldFill.style.boxShadow  = '0 0 8px var(--neon-cyan)';
-                hudShieldFill.style.animation  = 'none';
-            }
-        }
-    }
-
-    if (hudTimeVal) hudTimeVal.innerText = survivalTime.toFixed(1) + 's';
+    if (hudLevelVal)  hudLevelVal.innerText  = level;
+    if (hudShieldVal) hudShieldVal.innerText = Math.max(0, Math.ceil(shield));
+    if (hudTimeVal)   hudTimeVal.innerText   = survivalTime.toFixed(1) + 's';
 
 }
 
@@ -1924,7 +1864,7 @@ function drawInGameCanvasHUD() {
     ctx.textBaseline = 'middle';
     
     // [좌측] 레벨 표시
-    ctx.shadowBlur = LOW_GRAPHICS ? 0 : (8);
+    ctx.shadowBlur = 8;
     ctx.shadowColor = '#00f3ff';
     ctx.fillStyle = '#00f3ff';
     ctx.textAlign = 'left';
@@ -1970,7 +1910,7 @@ function drawInGameCanvasHUD() {
         }
         
         if (!blink) {
-            ctx.shadowBlur = LOW_GRAPHICS ? 0 : (10);
+            ctx.shadowBlur = 10;
             ctx.shadowColor = '#00f3ff';
             ctx.fillRect(barX, barY, fillW, barH);
         }
@@ -2250,7 +2190,7 @@ packageCards.forEach(card => {
 });
 
 // Portone 국내 간편 결제 요청 처리 (비동기)
-async function requestPortonePayment(targetChannelKey, targetPayMethod = "EASY_PAY") {
+async function requestPortonePayment() {
     if (typeof PortOne === 'undefined') {
         console.error("PortOne SDK를 로드할 수 없습니다.");
         alert("국내 결제 모듈 로드 실패. 새로고침 후 다시 시도해 주세요.");
@@ -2270,8 +2210,8 @@ async function requestPortonePayment(targetChannelKey, targetPayMethod = "EASY_P
             orderName: `Cyber Avoid Credits - ${selectedPackagePrice === '0.99' ? 'STARTER' : 'BOOSTER'}`,
             totalAmount: amountKRW,
             currency: "CURRENCY_KRW",
-            channelKey: targetChannelKey,
-            payMethod: targetPayMethod
+            channelKey: "channel-key-eabcf03a-193b-4af1-888e-c3be6852716d", // 대표님이 발급받으실 테스트 채널 키
+            payMethod: "EASY_PAY"
         });
         
         // 결제 실패 처리
@@ -2494,17 +2434,10 @@ function enableTiltControl() {
     }
 }
 
-// 카카오페이 결제 버튼 클릭 리스너 연결
-
-
-// 토스페이먼츠 결제 버튼 클릭 리스너 연결
-document.getElementById('btn-iap-purchase')?.addEventListener('click', () => {
+// 국내 결제 버튼 클릭 리스너 연결
+document.getElementById('btn-portone-pay').addEventListener('click', () => {
     SFX.playBeep();
-    if (typeof Android !== 'undefined') {
-        Android.purchaseSkin(selectedPackagePrice === '0.99' ? 'starter_pack' : 'booster_pack');
-    } else {
-        alert('이 기능은 모바일 안드로이드 앱에서만 지원됩니다.');
-    }
+    requestPortonePayment();
 });
 
 // Sound toggling
@@ -2682,8 +2615,8 @@ window.addEventListener('deviceorientation', (e) => {
     
     // e.gamma: 좌우 기울기 (-90 ~ 90). 스마트폰을 오른편으로 기울이면 +, 왼편은 -
     // e.beta: 앞뒤 기울기 (-180 ~ 180). 스마트폰을 세울수록 +, 눕힐수록 -
-    // 스마트폰을 들고 바라보는 기본 각도 20도를 중립(neutral)으로 함. (대표님 요청)
-    const targetBeta = 30;
+    // 기본적으로 스마트폰을 쥐고 게임을 바라보는 평균 각도인 45도를 중립점(neutral)으로 삼습니다.
+    const targetBeta = 45;
     const diffBeta = e.beta - targetBeta;
     
     // 감도 임계값 보정 (-15도 ~ 15도 범위를 -1 ~ 1로 정규화)
@@ -2707,74 +2640,3 @@ if (btnPauseTrigger) {
 }
 
 requestAnimationFrame(gameLoop);
-
-
-// 모바일 뒤로가기 버튼 실수 방지 로직 (popstate 인터셉트)
-history.pushState(null, null, location.href);
-window.addEventListener('popstate', function (event) {
-    if (confirm("정말 종료하시겠습니까?\n진행 중인 게임 데이터가 저장되지 않을 수 있습니다.")) {
-        // 확인 시, 실제로 페이지를 벗어나도록 다시 뒤로가기
-        history.go(-1);
-    } else {
-        // 취소 시, 현재 페이지 상태 유지 (다시 상태 푸시)
-        history.pushState(null, null, location.href);
-    }
-});
-
-
-// Android Native Bridge Callback
-// Android Native Bridge Callback (통합: 모든 SKU 처리)
-window.onNativePurchaseSuccess = function(sku) {
-    if (sku === 'starter_pack') {
-        totalCoins += 1000;
-        alert('스타터 팩 구매 완료! (1,000 코인 획득)');
-    } else if (sku === 'pack_5000') {
-        totalCoins += 5000;
-        alert('5,000 Credits Acquired!');
-    } else if (sku === 'pack_12000') {
-        totalCoins += 12000;
-        alert('12,000 Credits Acquired!');
-    } else {
-        totalCoins += 5000;
-        alert('부스터 팩 구매 완료! (5,000 코인 획득)');
-    }
-    localStorage.setItem('cyber_avoid_coins', totalCoins);
-    updateShopUI();
-};
-
-
-// ==========================================
-// Android Native UI Detection
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // If Android JS bridge exists
-    if (typeof Android !== 'undefined') {
-        
-        // Bilingual UI for Android
-        const overlayDesc = document.querySelector('#overlay-start .overlay-desc');
-        
-        if (overlayDesc) {
-            overlayDesc.innerHTML = '총알을 피해 살아남으십시오.<br>코인을 모아 기체를 업그레이드하세요.<br><br><span style="font-size:0.8em; color:#a0a0ff;">Survive by dodging bullets.<br>Collect coins to upgrade your ship.</span>';
-        }
-
-        const webPayment = document.getElementById('web-payment-container');
-        const paypalPayment = document.getElementById('paypal-button-container');
-        const appPayment = document.getElementById('app-payment-container');
-        
-        if (webPayment) webPayment.style.display = 'none';
-        if (paypalPayment) paypalPayment.style.display = 'none';
-        if (appPayment) appPayment.style.display = 'flex';
-        
-        const btnIap = document.getElementById('btn-iap-purchase');
-        if (btnIap) {
-            btnIap.addEventListener('click', () => {
-                // Determine which pack is selected
-                let selectedSku = 'pack_5000'; // Default
-                if (selectedCreditPack === 12000) selectedSku = 'pack_12000';
-                
-                Android.purchaseSkin(selectedSku);
-            });
-        }
-    }
-});
-
