@@ -955,13 +955,14 @@ body:has(#overlay-start.hidden) .cyber-grid {
     display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: hidden !important;
     gap: 10px;
     width: 100%;
     margin-bottom: 8px;
-    padding: 5px 2px 10px 2px;
+    padding: 5px 2px 12px 2px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+    scrollbar-color: var(--neon-cyan) rgba(8, 9, 15, 0.5);
 }
 
 .ship-card {
@@ -1352,10 +1353,12 @@ body:has(#overlay-start.hidden) .cyber-grid {
 
 /* 🐕 격납고 기체 선택 영역 가로 스크롤 오버라이드 */
 .ship-select-container {
-    max-height: 165px;  /* 가로 스크롤 및 카드 높이에 어울리는 적정 높이 */
+    max-height: 190px;  /* 가로 스크롤바 높이를 고려하여 넉넉히 확장해 뭉개짐 및 세로 스크롤 방지 */
     overflow-x: auto;   /* 가로 스크롤 활성화 */
-    overflow-y: hidden;
+    overflow-y: hidden !important;
     margin-bottom: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neon-cyan) rgba(8, 9, 15, 0.5);
 }
 
 /* 스크롤바 레트로 디자인 최적화 (가로) */
