@@ -105,23 +105,6 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P 1234 -T /usr/bin/codesign -A || true
 
-          # Diagnostic: Compare SHA1 of P12 Certificate with Provisioning Profile Certificates
-          echo "=== Certificate Diagnostics ==="
-          # Get SHA1 of the imported certificate
-          security find-certificate -a -Z -p $KEYCHAIN_PATH | grep "^SHA-1 hash:" > $RUNNER_TEMP/keychain_certs.txt
-          echo "Imported Certificate SHA1:"
-          cat $RUNNER_TEMP/keychain_certs.txt
-          
-          # Extract certificates from provisioning profile
-          security cms -D -i $PP_PATH > $RUNNER_TEMP/pp.plist
-          /usr/libexec/PlistBuddy -c "Print DeveloperCertificates" $RUNNER_TEMP/pp.plist | grep -v "Array" | grep -v "{" | grep -v "}" | tr -d ' \t' > $RUNNER_TEMP/pp_certs.txt
-          echo "Certificates in Provisioning Profile:"
-          while read -r cert_base64; do
-            if [ -n "$cert_base64" ]; then
-              echo "$cert_base64" | base64 --decode | openssl x509 -inform DER -noout -fingerprint -sha1
-            fi
-          done < $RUNNER_TEMP/pp_certs.txt
-          echo "==============================="
           security list-keychains -s $KEYCHAIN_PATH
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
