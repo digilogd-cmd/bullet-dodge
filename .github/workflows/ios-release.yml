@@ -86,8 +86,17 @@ jobs:
             cat $RUNNER_TEMP/raw_cert.file | tr -d '\r' > $RUNNER_TEMP/clean_cert.pem
             openssl pkcs12 -export -in $RUNNER_TEMP/clean_cert.pem -out $CERTIFICATE_PATH -password pass:1234
           else
-            echo "Format: P12. Using directly without re-encryption..."
-            cp $RUNNER_TEMP/raw_cert.file $CERTIFICATE_PATH
+            echo "Format: P12. Decrypting and re-encrypting with LibreSSL defaults..."
+            if openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:1234 2>/dev/null; then
+              echo "Successfully decrypted with password '1234'"
+              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234
+            elif openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:$P12_PASSWORD 2>/dev/null; then
+              echo "Successfully decrypted with P12_PASSWORD env var"
+              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234
+            else
+              echo "Failed to decrypt P12 file. Password is wrong or file is corrupt."
+              exit 1
+            fi
           fi
 
           echo "--- DEBUG INFO ---"
