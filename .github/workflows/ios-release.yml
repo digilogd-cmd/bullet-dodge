@@ -152,7 +152,7 @@ jobs:
               <string>manual</string>
               <key>provisioningProfiles</key>
               <dict>
-                  <key>com.digilogd.bulletdodge</key>
+                  <key>com.retro.bulletdodge</key>
                   <string>$PROFILE_UUID</string>
               </dict>
           </dict>
