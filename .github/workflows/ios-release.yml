@@ -56,6 +56,20 @@ jobs:
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
+          # Create keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security default-keychain -s $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+
+          # Download and import Apple WWDR Certificates to establish trust chain
+          curl -s -L -o $RUNNER_TEMP/AppleWWDRCA.cer https://developer.apple.com/certificationauthority/AppleWWDRCA.cer
+          curl -s -L -o $RUNNER_TEMP/AppleWWDRCAG3.cer https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer
+          curl -s -L -o $RUNNER_TEMP/AppleWWDRCAG6.cer https://www.apple.com/certificateauthority/AppleWWDRCAG6.cer
+          security import $RUNNER_TEMP/AppleWWDRCA.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign
+          security import $RUNNER_TEMP/AppleWWDRCAG3.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign
+          security import $RUNNER_TEMP/AppleWWDRCAG6.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign
+
           # Decode Certificate Secret
           echo -n "$BUILD_CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode > $RUNNER_TEMP/raw_cert.file
           echo -n "$BUILD_PROVISION_PROFILE_BASE64" | tr -d '\n\r\t ' | base64 --decode -o $PP_PATH
@@ -87,7 +101,6 @@ jobs:
           echo "Actual Profile Size: $(wc -c < $PP_PATH) bytes"
           echo "------------------"
 
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH || true
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P 1234 -T /usr/bin/codesign
@@ -99,11 +112,16 @@ jobs:
       - name: 🏗️ Archive & Export IPA via xcodebuild
         run: |
           cd ios/App
+
+          # Disable code signing for CocoaPods targets by replacing the post_install hook
+          perl -0777 -pi -e 's/post_install do \|installer\|.*?end/post_install do \|installer\|\n  assertDeploymentTarget(installer)\n  installer.pods_project.targets.each do \|target\|\n    target.build_configurations.each do \|config\|\n      config.build_settings["EXPANDED_CODE_SIGN_IDENTITY"] = ""\n      config.build_settings["CODE_SIGNING_REQUIRED"] = "NO"\n      config.build_settings["CODE_SIGNING_ALLOWED"] = "NO"\n    end\n  end\nend/s' Podfile
+
           pod install
 
           # Extract UUID and Team ID from Provisioning Profile
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i $RUNNER_TEMP/build_pp.mobileprovision))
-          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" /dev/stdin <<< $(security cms -D -i $RUNNER_TEMP/build_pp.mobileprovision))
+          security cms -D -i $RUNNER_TEMP/build_pp.mobileprovision > $RUNNER_TEMP/profile.plist
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" $RUNNER_TEMP/profile.plist)
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" $RUNNER_TEMP/profile.plist)
           echo "Extracted Profile UUID: $PROFILE_UUID"
           echo "Extracted Team ID: $TEAM_ID"
 
