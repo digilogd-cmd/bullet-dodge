@@ -60,6 +60,14 @@ jobs:
           echo -n "$BUILD_CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode -o $CERTIFICATE_PATH
           echo -n "$BUILD_PROVISION_PROFILE_BASE64" | tr -d '\n\r\t ' | base64 --decode -o $PP_PATH
 
+          echo "--- DEBUG INFO ---"
+          echo "Expected P12 Size: ~3251 bytes"
+          echo "Actual P12 Size: $(wc -c < $CERTIFICATE_PATH) bytes"
+          echo "Expected Profile Size: ~12000 bytes"
+          echo "Actual Profile Size: $(wc -c < $PP_PATH) bytes"
+          echo "P12 File Type: $(file $CERTIFICATE_PATH)"
+          echo "------------------"
+
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH || true
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
