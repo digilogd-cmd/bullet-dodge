@@ -177,7 +177,13 @@ jobs:
           ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8
+          if echo "$APP_STORE_CONNECT_API_KEY_BASE64" | grep -q "BEGIN PRIVATE KEY"; then
+            echo "API Key is already raw text, saving directly..."
+            echo "$APP_STORE_CONNECT_API_KEY_BASE64" > ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8
+          else
+            echo "API Key is base64, decoding..."
+            echo "$APP_STORE_CONNECT_API_KEY_BASE64" | tr -d '\n\r ' | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8
+          fi
 
           xcrun altool --upload-app \
             --type ios \
