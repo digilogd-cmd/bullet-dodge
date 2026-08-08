@@ -52,21 +52,27 @@ jobs:
           if [ -z "$BUILD_PROVISION_PROFILE_BASE64" ]; then echo "Error: APP_STORE_PROVISION_PROFILE_BASE64 is missing"; exit 1; fi
           if [ -z "$KEYCHAIN_PASSWORD" ]; then echo "Warning: KEYCHAIN_PASSWORD is not set, using default 'temp_pwd'"; KEYCHAIN_PASSWORD="temp_pwd"; fi
 
-          PEM_PATH=$RUNNER_TEMP/unified.pem
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
-          # Decode Unified PEM and Provisioning Profile
-          echo -n "$BUILD_CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode | tr -d '\r' > $PEM_PATH
+          # Decode Certificate Secret
+          echo -n "$BUILD_CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode | tr -d '\r' > $RUNNER_TEMP/raw_cert.file
           echo -n "$BUILD_PROVISION_PROFILE_BASE64" | tr -d '\n\r\t ' | base64 --decode -o $PP_PATH
 
-          # Generate the .p12 file natively on the macOS runner to avoid any OpenSSL encryption incompatibilities
-          echo "Generating native macOS .p12 from Unified PEM..."
-          openssl pkcs12 -export -in $PEM_PATH -out $CERTIFICATE_PATH -password pass:1234
+          # Determine format and convert to native macOS .p12
+          echo "Processing Certificate..."
+          if head -n 1 $RUNNER_TEMP/raw_cert.file | grep -q "^-----BEGIN"; then
+            echo "Format: PEM. Generating macOS native .p12..."
+            openssl pkcs12 -export -in $RUNNER_TEMP/raw_cert.file -out $CERTIFICATE_PATH -password pass:1234
+          else
+            echo "Format: P12. Decrypting OpenSSL 3 AES-256 and re-encrypting for macOS Keychain..."
+            # The original p12 was created by the first agent with password 'antigravity1234'
+            openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:antigravity1234
+            openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234
+          fi
 
           echo "--- DEBUG INFO ---"
-          echo "Unified PEM Size: $(wc -c < $PEM_PATH) bytes"
           echo "Generated P12 Size: $(wc -c < $CERTIFICATE_PATH) bytes"
           echo "Expected Profile Size: ~12000 bytes"
           echo "Actual Profile Size: $(wc -c < $PP_PATH) bytes"
