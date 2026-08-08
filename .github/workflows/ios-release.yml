@@ -34,8 +34,9 @@ jobs:
         run: |
           npm ci || npm install
 
-      - name: ⚡ Initialize & Sync Capacitor iOS
+      - name: 🏗️ Build Web Assets & Sync Capacitor iOS
         run: |
+          npm run build
           npx cap add ios || true
           npx cap sync ios
 
@@ -46,26 +47,20 @@ jobs:
           BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.APP_STORE_PROVISION_PROFILE_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          # 1. 인증서 및 프로비저닝 프로필 임시 파일 경로
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
-          # 2. Base64 디코딩
           echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
           echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
 
-          # 3. 임시 키체인 생성 및 세팅
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 3600 $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH || true
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
-          # 4. p12 인증서 키체인에 임포트
           security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P "$P12_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security list-keychains -s $KEYCHAIN_PATH
 
-          # 5. 프로비저닝 프로필 복사
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/
 
@@ -74,7 +69,6 @@ jobs:
           cd ios/App
           pod install
 
-          # Archive 프로젝트
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -82,7 +76,6 @@ jobs:
             -configuration Release \
             CODE_SIGN_STYLE="Manual"
 
-          # Export options plist 작성
           cat <<EOF > $RUNNER_TEMP/exportOptions.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -100,7 +93,6 @@ jobs:
           </plist>
           EOF
 
-          # Export IPA
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -exportOptionsPlist $RUNNER_TEMP/exportOptions.plist \
@@ -113,7 +105,6 @@ jobs:
           path: ${{ runner.temp }}/build_output/*.ipa
 
       - name: 🍏 Upload to TestFlight / App Store Connect
-        if: env.HAS_API_KEY == 'true'
         env:
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
           KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}

@@ -4,7 +4,7 @@
   "description": "Bullet Dodge Game - iOS & Android Capacitor Web App",
   "main": "index.html",
   "scripts": {
-    "build": "echo 'Web assets ready'",
+    "build": "node -e \"const fs=require('fs'); const path=require('path'); if(!fs.existsSync('www')) fs.mkdirSync('www'); ['index.html','game.js','style.css','auth.js','default_lobby_banner.png','goldie_voyager_skin.png','cyber_buddy_skin.png'].forEach(f => fs.copyFileSync(f, path.join('www', f))); if(fs.existsSync('images')) fs.cpSync('images', 'www/images', {recursive: true});\"",
     "cap:sync": "cap sync",
     "cap:add:ios": "cap add ios"
   },
