@@ -68,11 +68,15 @@ jobs:
           echo "P12 File Type: $(file $CERTIFICATE_PATH)"
           echo "------------------"
 
+          echo "P12 Password Length (raw): ${#P12_PASSWORD}"
+          P12_PASSWORD_CLEAN=$(echo -n "$P12_PASSWORD" | tr -d '\n\r\t ')
+          echo "P12 Password Length (clean): ${#P12_PASSWORD_CLEAN}"
+
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH || true
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
-          security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P "$P12_PASSWORD_CLEAN" -T /usr/bin/codesign
           security list-keychains -s $KEYCHAIN_PATH
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
