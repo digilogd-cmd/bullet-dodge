@@ -82,12 +82,22 @@ jobs:
             openssl pkcs12 -export -in $RUNNER_TEMP/clean_cert.pem -out $CERTIFICATE_PATH -password pass:1234
           else
             echo "Format: P12. Decrypting and re-encrypting with LibreSSL defaults..."
+            
+            # Check if openssl supports -legacy (OpenSSL 3.x)
+            if openssl pkcs12 -help 2>&1 | grep -q "\-legacy"; then
+              LEGACY_FLAG="-legacy"
+              echo "Using OpenSSL 3.x with -legacy flag for Apple keychain compatibility"
+            else
+              LEGACY_FLAG=""
+              echo "Using older OpenSSL/LibreSSL, relying on default legacy algorithms"
+            fi
+            
             if openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:1234 2>/dev/null; then
               echo "Successfully decrypted with password '1234'"
-              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234
+              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234 $LEGACY_FLAG
             elif openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:$P12_PASSWORD 2>/dev/null; then
               echo "Successfully decrypted with P12_PASSWORD env var"
-              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234
+              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234 $LEGACY_FLAG
             else
               echo "Failed to decrypt P12 file. Password is wrong or file is corrupt."
               exit 1
