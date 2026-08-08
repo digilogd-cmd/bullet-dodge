@@ -67,8 +67,16 @@ jobs:
             openssl pkcs12 -export -in $RUNNER_TEMP/raw_cert.file -out $CERTIFICATE_PATH -password pass:1234
           else
             echo "Format: P12. Decrypting OpenSSL 3 AES-256 and re-encrypting for macOS Keychain..."
-            # The original p12 was created by the first agent with password 'antigravity1234'
-            openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:antigravity1234
+            if openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:antigravity1234 2>/dev/null; then
+              echo "Successfully decrypted with original password"
+            elif openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:1234 2>/dev/null; then
+              echo "Successfully decrypted with fallback password"
+            elif openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass: 2>/dev/null; then
+              echo "Successfully decrypted with empty password"
+            else
+              echo "Error: Failed to decrypt P12. Unknown password or corrupt file."
+              exit 1
+            fi
             openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234
           fi
 
