@@ -101,12 +101,22 @@ jobs:
           cd ios/App
           pod install
 
+          # Extract UUID and Team ID from Provisioning Profile
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i $PP_PATH))
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" /dev/stdin <<< $(security cms -D -i $PP_PATH))
+          echo "Extracted Profile UUID: $PROFILE_UUID"
+          echo "Extracted Team ID: $TEAM_ID"
+
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -configuration Release \
-            CODE_SIGN_STYLE="Manual"
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_STYLE="Manual" \
+            CODE_SIGN_IDENTITY="Apple Distribution"
 
           cat <<EOF > $RUNNER_TEMP/exportOptions.plist
           <?xml version="1.0" encoding="UTF-8"?>
@@ -116,10 +126,10 @@ jobs:
               <key>method</key>
               <string>app-store</string>
               <key>teamID</key>
-              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <string>$TEAM_ID</string>
               <key>uploadSymbols</key>
               <true/>
-              <key>uploadBitcode</key>
+              <key>compileBitcode</key>
               <false/>
           </dict>
           </plist>
