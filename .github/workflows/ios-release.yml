@@ -57,14 +57,15 @@ jobs:
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
           # Decode Certificate Secret
-          echo -n "$BUILD_CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode | tr -d '\r' > $RUNNER_TEMP/raw_cert.file
+          echo -n "$BUILD_CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode > $RUNNER_TEMP/raw_cert.file
           echo -n "$BUILD_PROVISION_PROFILE_BASE64" | tr -d '\n\r\t ' | base64 --decode -o $PP_PATH
 
           # Determine format and convert to native macOS .p12
           echo "Processing Certificate..."
           if head -n 1 $RUNNER_TEMP/raw_cert.file | grep -q "^-----BEGIN"; then
-            echo "Format: PEM. Generating macOS native .p12..."
-            openssl pkcs12 -export -in $RUNNER_TEMP/raw_cert.file -out $CERTIFICATE_PATH -password pass:1234
+            echo "Format: PEM. Stripping CRLF and generating macOS native .p12..."
+            cat $RUNNER_TEMP/raw_cert.file | tr -d '\r' > $RUNNER_TEMP/clean_cert.pem
+            openssl pkcs12 -export -in $RUNNER_TEMP/clean_cert.pem -out $CERTIFICATE_PATH -password pass:1234
           else
             echo "Format: P12. Decrypting OpenSSL 3 AES-256 and re-encrypting for macOS Keychain..."
             if openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:antigravity1234 2>/dev/null; then
