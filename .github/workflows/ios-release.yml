@@ -12,11 +12,16 @@ on:
 jobs:
   build-ios:
     name: 🍎 Xcode IPA Build & App Store Upload
-    runs-on: macos-latest
+    runs-on: macos-14
 
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+
+      - name: 🍏 Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.0'
 
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
