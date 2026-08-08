@@ -102,8 +102,8 @@ jobs:
           pod install
 
           # Extract UUID and Team ID from Provisioning Profile
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i $PP_PATH))
-          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" /dev/stdin <<< $(security cms -D -i $PP_PATH))
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i $RUNNER_TEMP/build_pp.mobileprovision))
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" /dev/stdin <<< $(security cms -D -i $RUNNER_TEMP/build_pp.mobileprovision))
           echo "Extracted Profile UUID: $PROFILE_UUID"
           echo "Extracted Team ID: $TEAM_ID"
 
