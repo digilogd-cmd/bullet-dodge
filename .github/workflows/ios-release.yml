@@ -79,7 +79,7 @@ jobs:
           if head -n 1 $RUNNER_TEMP/raw_cert.file | grep -q "^-----BEGIN"; then
             echo "Format: PEM. Stripping CRLF and generating macOS native .p12..."
             cat $RUNNER_TEMP/raw_cert.file | tr -d '\r' > $RUNNER_TEMP/clean_cert.pem
-            openssl pkcs12 -export -in $RUNNER_TEMP/clean_cert.pem -out $CERTIFICATE_PATH -password pass:$P12_PASSWORD
+            openssl pkcs12 -export -in $RUNNER_TEMP/clean_cert.pem -out $CERTIFICATE_PATH -password pass:1234
           else
             echo "Format: P12. Using directly without re-encryption..."
             cp $RUNNER_TEMP/raw_cert.file $CERTIFICATE_PATH
@@ -95,7 +95,7 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
             
           # Import the certificate
-          security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P "$P12_PASSWORD" -T /usr/bin/codesign -A
+          security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P 1234 -T /usr/bin/codesign -A
 
           # Set partition list AFTER import to grant codesign tool access without UI prompt
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH || true
