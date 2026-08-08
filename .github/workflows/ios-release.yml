@@ -1,4 +1,4 @@
-name: 🍎 iOS Capacitor App Store Release Build
+name: iOS Capacitor App Store Release Build
 
 on:
   push:
