@@ -58,7 +58,7 @@ jobs:
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
           # Decode Unified PEM and Provisioning Profile
-          echo -n "$BUILD_CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode -o $PEM_PATH
+          echo -n "$BUILD_CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode | tr -d '\r' > $PEM_PATH
           echo -n "$BUILD_PROVISION_PROFILE_BASE64" | tr -d '\n\r\t ' | base64 --decode -o $PP_PATH
 
           # Generate the .p12 file natively on the macOS runner to avoid any OpenSSL encryption incompatibilities
