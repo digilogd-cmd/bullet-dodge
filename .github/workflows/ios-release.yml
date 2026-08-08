@@ -143,13 +143,18 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>method</key>
-              <string>app-store</string>
+              <string>app-store-connect</string>
               <key>teamID</key>
               <string>$TEAM_ID</string>
               <key>uploadSymbols</key>
               <true/>
-              <key>compileBitcode</key>
-              <false/>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.digilogd.bulletdodge</key>
+                  <string>$PROFILE_UUID</string>
+              </dict>
           </dict>
           </plist>
           EOF
