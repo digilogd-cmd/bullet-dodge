@@ -11,8 +11,8 @@ on:
 
 jobs:
   build-ios:
-    name: 🛠️ Xcode IPA Build & App Store Upload
-    runs-on: macos-14
+    name: 🍎 Xcode IPA Build & App Store Upload
+    runs-on: macos-latest
 
     steps:
       - name: 📥 Checkout Repository
