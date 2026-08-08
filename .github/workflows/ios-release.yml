@@ -79,18 +79,18 @@ jobs:
           if head -n 1 $RUNNER_TEMP/raw_cert.file | grep -q "^-----BEGIN"; then
             echo "Format: PEM. Stripping CRLF and generating macOS native .p12..."
             cat $RUNNER_TEMP/raw_cert.file | tr -d '\r' > $RUNNER_TEMP/clean_cert.pem
-            openssl pkcs12 -export -in $RUNNER_TEMP/clean_cert.pem -out $CERTIFICATE_PATH -password pass:1234 -keypbe AES-256-CBC -certpbe AES-256-CBC -macalg SHA256
+            openssl pkcs12 -export -in $RUNNER_TEMP/clean_cert.pem -out $CERTIFICATE_PATH -password pass:1234 -keypbe AES-256-CBC -certpbe AES-256-CBC
           else
             echo "Format: P12. Decrypting OpenSSL 3 AES-256 and re-encrypting for macOS Keychain..."
             if openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:antigravity1234 2>/dev/null; then
               echo "Successfully decrypted with original password"
-              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234 -keypbe AES-256-CBC -certpbe AES-256-CBC -macalg SHA256
+              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234 -keypbe AES-256-CBC -certpbe AES-256-CBC
             elif openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass:1234 2>/dev/null; then
               echo "Successfully decrypted with fallback password"
-              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234 -keypbe AES-256-CBC -certpbe AES-256-CBC -macalg SHA256
+              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234 -keypbe AES-256-CBC -certpbe AES-256-CBC
             elif openssl pkcs12 -in $RUNNER_TEMP/raw_cert.file -out $RUNNER_TEMP/converted.pem -nodes -passin pass: 2>/dev/null; then
               echo "Successfully decrypted with empty password"
-              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234 -keypbe AES-256-CBC -certpbe AES-256-CBC -macalg SHA256
+              openssl pkcs12 -export -in $RUNNER_TEMP/converted.pem -out $CERTIFICATE_PATH -password pass:1234 -keypbe AES-256-CBC -certpbe AES-256-CBC
             else
               echo "Error: Failed to decrypt P12. Unknown password or corrupt file."
               exit 1
