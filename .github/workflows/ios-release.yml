@@ -66,9 +66,9 @@ jobs:
           curl -s -L -o $RUNNER_TEMP/AppleWWDRCA.cer https://developer.apple.com/certificationauthority/AppleWWDRCA.cer
           curl -s -L -o $RUNNER_TEMP/AppleWWDRCAG3.cer https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer
           curl -s -L -o $RUNNER_TEMP/AppleWWDRCAG6.cer https://www.apple.com/certificateauthority/AppleWWDRCAG6.cer
-          security import $RUNNER_TEMP/AppleWWDRCA.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign
-          security import $RUNNER_TEMP/AppleWWDRCAG3.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign
-          security import $RUNNER_TEMP/AppleWWDRCAG6.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign
+          security import $RUNNER_TEMP/AppleWWDRCA.cer -k $KEYCHAIN_PATH -A
+          security import $RUNNER_TEMP/AppleWWDRCAG3.cer -k $KEYCHAIN_PATH -A
+          security import $RUNNER_TEMP/AppleWWDRCAG6.cer -k $KEYCHAIN_PATH -A
 
           # Decode Certificate Secret
           echo -n "$BUILD_CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode > $RUNNER_TEMP/raw_cert.file
@@ -103,7 +103,25 @@ jobs:
 
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH || true
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P 1234 -T /usr/bin/codesign
+          security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P 1234 -T /usr/bin/codesign -A || true
+
+          # Diagnostic: Compare SHA1 of P12 Certificate with Provisioning Profile Certificates
+          echo "=== Certificate Diagnostics ==="
+          # Get SHA1 of the imported certificate
+          security find-certificate -a -Z -p $KEYCHAIN_PATH | grep "^SHA-1 hash:" > $RUNNER_TEMP/keychain_certs.txt
+          echo "Imported Certificate SHA1:"
+          cat $RUNNER_TEMP/keychain_certs.txt
+          
+          # Extract certificates from provisioning profile
+          security cms -D -i $PP_PATH > $RUNNER_TEMP/pp.plist
+          /usr/libexec/PlistBuddy -c "Print DeveloperCertificates" $RUNNER_TEMP/pp.plist | grep -v "Array" | grep -v "{" | grep -v "}" | tr -d ' \t' > $RUNNER_TEMP/pp_certs.txt
+          echo "Certificates in Provisioning Profile:"
+          while read -r cert_base64; do
+            if [ -n "$cert_base64" ]; then
+              echo "$cert_base64" | base64 --decode | openssl x509 -inform DER -noout -fingerprint -sha1
+            fi
+          done < $RUNNER_TEMP/pp_certs.txt
+          echo "==============================="
           security list-keychains -s $KEYCHAIN_PATH
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
