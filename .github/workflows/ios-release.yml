@@ -124,7 +124,13 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      - name: 🏗️ Archive & Export IPA via xcodebuild
+      - name: 🔢 Bump Build Number & Target OS
+        run: |
+          cd ios/App
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [^\;]*;/CURRENT_PROJECT_VERSION = ${{ github.run_number }};/g" App.xcodeproj/project.pbxproj
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [^\;]*;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g" App.xcodeproj/project.pbxproj
+
+      - name: 🏗️ Build & Archive App & Export IPA via xcodebuild
         env:
           KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
         run: |
