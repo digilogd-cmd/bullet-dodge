@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <!-- 캐시 방지 헤더 추가로 모바일 브라우저 최신화 강제 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -413,28 +413,17 @@
                 <h2 class="arcade-title text-cyan" style="font-size: 1.2rem;">PILOT SIGN IN</h2>
                 <button id="btn-login-close-modal" class="btn-close-x">×</button>
             </div>
-            <div class="login-modal-body">
-                <p class="login-desc font-orbitron" style="font-size: 0.72rem; line-height: 1.5; color: rgba(255, 255, 255, 0.65); margin-bottom: 12px;">데이터베이스에 연동하여 파일럿 데이터(코인, 스킨, 점수)를 클라우드에 영구히 저장하십시오.</p>
-                
-                <div class="login-form-group" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; width: 100%;">
-                    <input type="email" id="login-email" placeholder="EMAIL..." class="cyber-input font-orbitron" style="width: 100%; font-size: 0.85rem; letter-spacing: 1px; padding: 8px 10px; text-align: left;">
-                    <input type="password" id="login-password" placeholder="PASSWORD..." class="cyber-input font-orbitron" style="width: 100%; font-size: 0.85rem; letter-spacing: 1px; padding: 8px 10px; text-align: left;">
-                </div>
+            <div class="login-modal-body" style="padding: 20px 10px; text-align: center;">
+                <p class="login-desc font-orbitron" style="font-size: 0.75rem; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin-bottom: 20px;">구글 계정으로 원터치 연동하여 파일럿 데이터(코인, 스킨, 점수)를 클라우드에 안전하게 저장하십시오.</p>
 
-                <div class="login-actions" style="width: 100%;">
-                    <button id="btn-email-signin" class="neon-btn btn-cyan font-orbitron" style="width: 100%; padding: 8px 0; font-size: 0.75rem; margin-bottom: 8px; letter-spacing: 2px;">SIGN IN WITH EMAIL</button>
-                    <button id="btn-email-signup" class="neon-btn-small font-orbitron" style="width: 100%; color: var(--neon-pink); border-color: var(--neon-pink); padding: 6px 0; font-size: 0.65rem; margin-bottom: 12px; letter-spacing: 1px; display: block;">CREATE NEW ACCOUNT (SIGN UP)</button>
-                </div>
+                <!-- Google 원터치 로그인 -->
+                <button id="btn-google-signin" class="neon-btn font-orbitron" style="width: 100%; border-color: var(--neon-yellow); color: var(--neon-yellow); font-size: 0.85rem; padding: 12px 0; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 2px; box-shadow: 0 0 15px rgba(255, 230, 0, 0.3); margin-bottom: 12px;">
+                    <span style="font-size: 1.1rem;">🌐</span> GOOGLE QUICK SIGN IN
+                </button>
 
-                <div class="auth-divider" style="display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 12px; color: rgba(255,255,255,0.3); font-size: 0.65rem; font-family: var(--font-arcade);">
-                    <span style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1); margin-right: 10px;"></span>
-                    <span>OR</span>
-                    <span style="flex-grow: 1; height: 1px; background: rgba(255,255,255,0.1); margin-left: 10px;"></span>
-                </div>
-
-                <!-- Google 간편 로그인 -->
-                <button id="btn-google-signin" class="neon-btn font-orbitron" style="width: 100%; border-color: var(--neon-yellow); color: var(--neon-yellow); font-size: 0.75rem; padding: 8px 0; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 2px;">
-                    <span style="font-size: 0.95rem;">🌐</span> GOOGLE QUICK SIGN IN
+                <!-- Apple 원터치 로그인 (iOS 필수 요구사항 대응) -->
+                <button id="btn-apple-signin" class="neon-btn font-orbitron" style="width: 100%; border-color: #ffffff; color: #ffffff; background: #000000; font-size: 0.85rem; padding: 12px 0; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 2px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);">
+                    <span style="font-size: 1.1rem;">🍎</span> SIGN IN WITH APPLE
                 </button>
             </div>
         </div>

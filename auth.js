@@ -46,6 +46,7 @@ const btnLoginCloseModal = document.getElementById('btn-login-close-modal');
 const btnEmailSignin = document.getElementById('btn-email-signin');
 const btnEmailSignup = document.getElementById('btn-email-signup');
 const btnGoogleSignin = document.getElementById('btn-google-signin');
+const btnAppleSignin = document.getElementById('btn-apple-signin');
 const btnLogout = document.getElementById('btn-logout');
 
 const inputEmail = document.getElementById('login-email');
@@ -311,7 +312,59 @@ if (btnGoogleSignin) {
         } finally {
             if (btnGoogleSignin) {
                 btnGoogleSignin.disabled = false;
-                btnGoogleSignin.innerText = '🚀 구글로 로그인';
+                btnGoogleSignin.innerText = '🌐 GOOGLE QUICK SIGN IN';
+            }
+        }
+    });
+}
+
+// [A-2] Apple 간편 로그인 (iOS 앱스토어 가이드라인 4.8조 대응)
+if (btnAppleSignin) {
+    btnAppleSignin.addEventListener('click', async () => {
+        if (typeof SFX !== 'undefined') SFX.playBeep();
+        
+        if (isMockAuth) {
+            const mockUser = {
+                uid: "mock_apple_uid_5678",
+                email: "apple.pilot@icloud.com",
+                displayName: "Apple Pilot",
+                photoURL: null
+            };
+            localStorage.setItem('cyber_avoid_mock_user', JSON.stringify(mockUser));
+            updatePilotProfileUI(mockUser);
+            loginModal.classList.remove('active');
+            alert("[데모 모드] Apple 간편 로그인 성공!");
+            return;
+        }
+
+        try {
+            btnAppleSignin.disabled = true;
+            btnAppleSignin.innerText = '로그인 중...';
+            
+            const provider = new firebase.auth.OAuthProvider('apple.com');
+            provider.addScope('email');
+            provider.addScope('name');
+            
+            const result = await auth.signInWithPopup(provider);
+            const user = result.user;
+            
+            console.log('✅ Apple 로그인 성공! UID:', user.uid);
+            updatePilotProfileUI(user);
+            loginModal.classList.remove('active');
+            
+            await syncAndLoadUserData(user.uid, user.email || 'apple_pilot@icloud.com');
+            alert(`환영합니다, ${user.displayName || '애플 파일럿'}님! 데이터 동기화 완료.`);
+        } catch (error) {
+            console.error("Apple 로그인 에러:", error.code, error.message);
+            if (error.code === 'auth/popup-closed-by-user') {
+                console.log('사용자가 Apple 로그인 창을 닫았습니다.');
+            } else {
+                alert("Apple 로그인에 실패했습니다.\n" + (error.message || '알 수 없는 오류'));
+            }
+        } finally {
+            if (btnAppleSignin) {
+                btnAppleSignin.disabled = false;
+                btnAppleSignin.innerText = '🍎 SIGN IN WITH APPLE';
             }
         }
     });

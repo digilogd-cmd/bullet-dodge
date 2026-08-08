@@ -1,0 +1,14 @@
+{
+  "appId": "com.retro.bulletdodge",
+  "appName": "Bullet Dodge",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "ios": {
+    "contentInset": "always",
+    "allowsLinkPreview": false,
+    "scrollEnabled": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

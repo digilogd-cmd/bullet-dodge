@@ -350,7 +350,8 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 // Shadow configuration hijacking helper for performance optimization
-let enableGraphicsEffects = localStorage.getItem('cyber_avoid_low_graphics') !== 'true';
+let _isMob = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0);
+let enableGraphicsEffects = localStorage.getItem('cyber_avoid_low_graphics') === 'true' ? false : !_isMob;
 
 const shadowBlurDescriptor = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'shadowBlur');
 if (shadowBlurDescriptor && shadowBlurDescriptor.set) {
@@ -412,10 +413,10 @@ let unlockedShips = JSON.parse(localStorage.getItem('cyber_avoid_unlocked_ships'
 let activeShip = localStorage.getItem('cyber_avoid_active_ship') || 'default';
 let upgrades = JSON.parse(localStorage.getItem('cyber_avoid_upgrades')) || { shieldCap: 0, magnetRange: 0, shieldDuration: 0 };
 
-// DEVELOPER BONUS: Give 15,000 credits on first load ever to allow immediate shop testing!
+// Launch Event Bonus: Give 3,000 coins to new players!
 if (localStorage.getItem('cyber_avoid_v2_initialized') !== 'true') {
-    totalCoins = 15000;
-    localStorage.setItem('cyber_avoid_coins', '15000');
+    totalCoins = 3000;
+    localStorage.setItem('cyber_avoid_coins', '3000');
     localStorage.setItem('cyber_avoid_v2_initialized', 'true');
 }
 
@@ -754,13 +755,13 @@ class Player {
         }
         */
             // 배기 파티클: 매 프레임 대신 50% 확률로만 생성 (성능 최적화)
-        if (Math.random() < 0.50) {
+        if (Math.random() < 0.25) {
             const exhaustColor = this.isShielded ? '#00f3ff' : this.color;
             
             // 버디 기체일 경우 양쪽 제트팩에서 파티클이 나가도록 처리
             if (activeShipModel === 'buddy') {
-                spawnParticle(this.x - 14, this.y + 12, Math.random() * 1 - 0.5, 2 + Math.random() * 2, '#39ff14', 16);
-                spawnParticle(this.x + 14, this.y + 12, Math.random() * 1 - 0.5, 2 + Math.random() * 2, '#39ff14', 16);
+                spawnParticle(this.x - 14, this.y + 12, Math.random() * 1 - 0.5, 2 + Math.random() * 2, '#39ff14', 12);
+                spawnParticle(this.x + 14, this.y + 12, Math.random() * 1 - 0.5, 2 + Math.random() * 2, '#39ff14', 12);
             } else {
                 spawnParticle(
                     this.x - 1 + (Math.random() * 3 - 1.5), 
@@ -768,19 +769,19 @@ class Player {
                     Math.random() * 2 - 1, 
                     2 + Math.random() * 3, 
                     exhaustColor, 
-                    18
+                    12
                 );
             }
         }
-        // 보조 노란 불꽃: 33% 확률
-        if (Math.random() < 0.33) {
+        // 보조 노란 불꽃: 10% 확률
+        if (Math.random() < 0.10) {
             spawnParticle(
                 this.x - 1 + (Math.random() * 3 - 1.5), 
                 this.y + this.height / 2, 
                 Math.random() * 1 - 0.5, 
                 1 + Math.random() * 2, 
                 '#fffb00', 
-                12
+                10
             );
         }
         }
@@ -1242,7 +1243,7 @@ class Bullet {
 
         if (this.type === 'missile') {
             ctx.save();
-            ctx.translate(this.x, this.y);
+            ctx.translate(this.x | 0, this.y | 0);
             ctx.beginPath();
             ctx.moveTo(0, this.radius);
             ctx.lineTo(this.radius * 0.6, -this.radius);
@@ -1251,8 +1252,8 @@ class Bullet {
             ctx.fill();
             ctx.restore();
         } else {
-            // 원 대신 사각형으로 그려서 CPU 부하 대폭 절감
-            ctx.fillRect(this.x - s/2, this.y - s/2, s, s);
+            // 원 대신 사각형으로 그려서 CPU 부하 대폭 절감 + 소수점 픽셀 렌더링 방지
+            ctx.fillRect((this.x - s/2) | 0, (this.y - s/2) | 0, s | 0, s | 0);
         }
     }
 }
@@ -1336,13 +1337,13 @@ function updateStars() {
 function drawStars() {
     ctx.save();
     ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff'; // 성능을 위해 루프 밖으로 이동
     
-    // 사각형(fillRect)으로 그려서 성능 극한 최적화
+    // 사각형(fillRect)으로 그려서 성능 극한 최적화 + 정수 좌표 캐스팅(| 0)
     for (let i = 0; i < stars.length; i++) {
         const star = stars[i];
         ctx.globalAlpha = star.alpha;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(star.x, star.y, star.size, star.size);
+        ctx.fillRect(star.x | 0, star.y | 0, star.size | 0, star.size | 0);
     }
     
     ctx.globalAlpha = 1.0;
@@ -1388,9 +1389,9 @@ function drawParticles() {
         const alpha = p.life / p.maxLife;
         ctx.globalAlpha = alpha;
         ctx.fillStyle = p.color;
-        // 사각형으로 그려서 Arc 연산 제거 (성능 핵심)
+        // 사각형으로 그려서 Arc 연산 제거 (성능 핵심) + 소수점 방지
         const s = 2 + (1.5 * alpha);
-        ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+        ctx.fillRect((p.x - s/2) | 0, (p.y - s/2) | 0, s | 0, s | 0);
     }
     ctx.globalAlpha = 1.0;
     ctx.restore();
@@ -1422,7 +1423,7 @@ function updateAndDrawFloatingTexts() {
         ft.opacity = ft.life / ft.maxLife;
         
         ctx.fillStyle = `rgba(255, 251, 0, ${ft.opacity})`;
-        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.fillText(ft.text, ft.x | 0, ft.y | 0); // 소수점 픽셀 방지
         
         if (ft.life <= 0) {
             floatingTexts.splice(i, 1);
@@ -1556,44 +1557,44 @@ function spawnBulletsLogic() {
     itemSpawnTimer += timeScale;
     coinSpawnTimer += timeScale;
 
-    const rateScale = Math.max(0.35, 1 - (level - 1) * 0.08);
-    const baseSpeed = 2.4 + (level - 1) * 0.5;
+    const rateScale = Math.max(0.5, 1 - (level - 1) * 0.05);
+    const baseSpeed = 1.3 + (level - 1) * 0.25; // 더 쾌적하게! 슬로우 모션급 유연한 난이도 조정 (1.7 -> 1.3)
 
     // 1. Standard Red Bullets
-    if (bulletSpawnTimer >= 18 * rateScale) {
+    if (bulletSpawnTimer >= 26 * rateScale) {
         bulletSpawnTimer = 0;
         const x = 20 + Math.random() * (CANVAS_WIDTH - 40);
-        const vy = baseSpeed + Math.random() * 1.5;
+        const vy = baseSpeed + Math.random() * 0.8;
         bullets.push(new Bullet(x, -10, 0, vy, 'standard'));
     }
 
     // 2. Sine Wave Green Bullets
-    if (level >= 2 && specialSpawnTimer >= 45 * rateScale) {
+    if (level >= 2 && specialSpawnTimer >= 65 * rateScale) {
         specialSpawnTimer = 0;
         const x = 60 + Math.random() * (CANVAS_WIDTH - 120);
-        const vy = (baseSpeed * 0.75) + Math.random() * 1.0;
+        const vy = (baseSpeed * 0.75) + Math.random() * 0.6;
         bullets.push(new Bullet(x, -10, 0, vy, 'sine'));
     }
 
     // 3. Guided Missiles (Warning indications)
-    if (level >= 3 && missileSpawnTimer >= 85 * rateScale) {
+    if (level >= 3 && missileSpawnTimer >= 95 * rateScale) {
         missileSpawnTimer = 0;
         const targetX = 30 + Math.random() * (CANVAS_WIDTH - 60);
         warningLines.push(new WarningLine(targetX));
         setTimeout(() => {
             if (gameState === STATE_PLAYING) {
-                bullets.push(new Bullet(targetX, -25, 0, 1.8, 'missile'));
+                bullets.push(new Bullet(targetX, -25, 0, 1.5, 'missile'));
                 SFX.playLevelWarp();
             }
-        }, 1000);
+        }, 1100);
     }
 
     // 4. Frag Split Purple Orbs
-    if (level >= 4 && Math.random() < 0.007 * level) {
+    if (level >= 4 && Math.random() < 0.005 * level) {
         const x = 30 + Math.random() * (CANVAS_WIDTH - 60);
         const angle = (240 + Math.random() * 60) * Math.PI / 180;
-        const vx = Math.cos(angle) * 1.0;
-        const vy = baseSpeed * 0.65;
+        const vx = Math.cos(angle) * 0.8;
+        const vy = baseSpeed * 0.6;
         bullets.push(new Bullet(x, -10, vx, vy, 'frag'));
     }
 
@@ -1675,19 +1676,19 @@ function startVirtualAdPlayer() {
     if (countdown)    countdown.innerText = '15';
     if (overlayAdPlayer) overlayAdPlayer.classList.add('active');
 
-    // ─── 자체 15초 카운트다운 가상 광고 플레이어 가동 ───
+    // ─── 5초 카운트다운 가상 광고 플레이어 가동 (15초 -> 5초로 대폭 단축!) ───
     nativeAdActive = false;
-    let sec = 15;
+    let sec = 5;
     if (countdown) countdown.innerText = String(sec);
     adCountdownTimer = setInterval(() => {
         sec = Math.max(0, sec - 1);
-        const pct = ((15 - sec) / 15) * 100;
+        const pct = ((5 - sec) / 5) * 100;
         if (progressFill) progressFill.style.width = pct.toFixed(1) + '%';
         if (countdown) countdown.innerText = String(sec);
         if (sec <= 0) {
             clearInterval(adCountdownTimer);
             adCountdownTimer = null;
-            if (statusText) statusText.innerText = 'AD COMPLETE!';
+            if (statusText) statusText.innerText = 'FREE REVIVE READY!';
             if (countdown) countdown.innerText = '0';
             if (btnClose) {
                 btnClose.classList.remove('hidden');
@@ -1941,8 +1942,7 @@ function gameLoop() {
             skipRevive();
         }
     } else if (gameState === STATE_AD_PLAYING) {
-        // 광고 재생 중 - 주시타입만 구동 (뺄크 코드 없음)
-        // 카운트다운은 setInterval이 자체 관리, 여기서는 이젠 DOM 참조 없음
+        // 광고 재생 중
     }
 
     updateHUD();

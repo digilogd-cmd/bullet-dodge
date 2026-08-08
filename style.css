@@ -41,7 +41,7 @@ body {
     justify-content: space-between;
     overflow-x: hidden;
     position: relative;
-    padding: 20px 0;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) env(safe-area-inset-right, 0px) calc(20px + env(safe-area-inset-bottom, 0px)) env(safe-area-inset-left, 0px);
 }
 
 /* Moving Cyberpunk Grid Background */
