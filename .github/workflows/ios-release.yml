@@ -101,9 +101,14 @@ jobs:
           echo "Actual Profile Size: $(wc -c < $PP_PATH) bytes"
           echo "------------------"
 
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH || true
+          # Ensure keychain is unlocked before import
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+            
+          # Import the certificate
           security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P 1234 -T /usr/bin/codesign -A || true
+
+          # Set partition list AFTER import to grant codesign tool access without UI prompt
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH || true
 
           security list-keychains -s $KEYCHAIN_PATH
 
