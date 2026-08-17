@@ -124,16 +124,38 @@ jobs:
           sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = ${GITHUB_RUN_NUMBER};/g" ios/App/App.xcodeproj/project.pbxproj
 
       - name: Resolve SPM packages and archive
-        env:
-          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           set -euo pipefail
           cd ios/App
           xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
           security cms -D -i "$RUNNER_TEMP/sommers.mobileprovision" > "$RUNNER_TEMP/profile.plist"
-          TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$RUNNER_TEMP/profile.plist")
-          API_KEY_PATH="$RUNNER_TEMP/AuthKey_${API_KEY_ID}.p8"
+          export TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$RUNNER_TEMP/profile.plist")
+
+          # Apply manual distribution signing only to the native App target.
+          # Command-line signing overrides are intentionally avoided because
+          # they also propagate to unsigned SPM resource bundle targets.
+          gem install xcodeproj --no-document
+          ruby <<'RUBY'
+          require 'xcodeproj'
+          project = Xcodeproj::Project.open('App.xcodeproj')
+          target = project.targets.find { |item| item.name == 'App' }
+          abort('App target not found') unless target
+
+          target.build_configurations.each do |config|
+            next unless config.name == 'Release'
+            settings = config.build_settings
+            settings['CODE_SIGN_STYLE'] = 'Manual'
+            settings['DEVELOPMENT_TEAM'] = ENV.fetch('TEAM_ID')
+            settings['PROVISIONING_PROFILE_SPECIFIER'] = ENV.fetch('PROFILE_NAME')
+            settings['CODE_SIGN_IDENTITY'] = 'Apple Distribution'
+          end
+
+          attributes = project.root_object.attributes['TargetAttributes'] ||= {}
+          target_attributes = attributes[target.uuid] ||= {}
+          target_attributes['ProvisioningStyle'] = 'Manual'
+          target_attributes['DevelopmentTeam'] = ENV.fetch('TEAM_ID')
+          project.save
+          RUBY
 
           xcodebuild archive \
             -project App.xcodeproj \
@@ -141,13 +163,6 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/Sommers.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "$API_KEY_ID" \
-            -authenticationKeyIssuerID "$API_ISSUER_ID" \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            CODE_SIGN_STYLE=Automatic \
-            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/sommers-signing.keychain-db"
 
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
@@ -155,8 +170,12 @@ jobs:
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
             <key>method</key><string>app-store-connect</string>
-            <key>signingStyle</key><string>automatic</string>
+            <key>signingStyle</key><string>manual</string>
             <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key><dict>
+              <key>$BUNDLE_ID</key><string>$PROFILE_NAME</string>
+            </dict>
             <key>uploadSymbols</key><true/>
           </dict></plist>
           PLIST
@@ -165,11 +184,7 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/Sommers.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
-            -exportPath "$RUNNER_TEMP/sommers-output" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "$API_KEY_ID" \
-            -authenticationKeyIssuerID "$API_ISSUER_ID"
+            -exportPath "$RUNNER_TEMP/sommers-output"
 
       - name: Save IPA artifact
         uses: actions/upload-artifact@v4
