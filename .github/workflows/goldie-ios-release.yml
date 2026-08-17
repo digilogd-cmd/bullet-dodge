@@ -72,7 +72,11 @@ jobs:
           asc_load_credentials
           ENCODED_NAME=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))' "$PROFILE_NAME")
           asc_api_get "/v1/profiles?filter[name]=${ENCODED_NAME}&filter[profileType]=IOS_APP_STORE&limit=20"
-          printf '%s' "$ASC_API_BODY" | jq -r '.data[] | select(.attributes.profileState == "ACTIVE") | .attributes.profileContent' | head -n 1 | base64 --decode > "$RUNNER_TEMP/goldie.mobileprovision"
+          PROFILE_ID=$(printf '%s' "$ASC_API_BODY" | jq -r '[.data[] | select(.attributes.profileState == "ACTIVE")][0].id')
+          test -n "$PROFILE_ID"
+          test "$PROFILE_ID" != "null"
+          asc_api_get "/v1/profiles/${PROFILE_ID}"
+          printf '%s' "$ASC_API_BODY" | jq -r '.data.attributes.profileContent' | base64 --decode > "$RUNNER_TEMP/goldie.mobileprovision"
           test -s "$RUNNER_TEMP/goldie.mobileprovision"
 
       - name: Install distribution certificate and profile
