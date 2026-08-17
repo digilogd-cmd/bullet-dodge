@@ -36,7 +36,7 @@ jobs:
 
       - name: Install dependencies, build web, sync iOS
         run: |
-          npm ci
+          npm ci --legacy-peer-deps
           npm run build
           npx cap sync ios
 
