@@ -2571,11 +2571,13 @@ btnMute.addEventListener('click', () => {
 // Action buttons
 document.getElementById('btn-start').addEventListener('click', () => {
     SFX.playLevelWarp();
+    if (controlMode === 'tilt') enableTiltControl();
     initGame();
 });
 
 document.getElementById('btn-restart').addEventListener('click', () => {
     SFX.playLevelWarp();
+    if (controlMode === 'tilt') enableTiltControl();
     initGame();
 });
 
@@ -2814,24 +2816,24 @@ requestAnimationFrame(gameLoop);
 // Google Play Native Billing Bridge
 window.onNativePurchaseSuccess = function(productId) {
     let addedCredits = 0;
-    // HTML 상점 정의와 일치하도록 보상 수량 조정
+    // 구글 플레이 콘솔 상품 및 Hangar 상점 정의와 100% 일치
     if (productId === 'pack_starter') {
-        addedCredits = 5000;
+        addedCredits = 10000;
     } else if (productId === 'pack_booster') {
-        addedCredits = 12000;
+        addedCredits = 30000;
     } else {
-        // 하위 호환성 또는 예외 처리용
-        addedCredits = 5000;
+        addedCredits = 10000;
     }
     
     totalCoins += addedCredits;
     localStorage.setItem('cyber_avoid_coins', totalCoins);
     domCoins.innerText = String(totalCoins + sessionCoins).padStart(6, '0');
-    document.getElementById('shop-coins').innerText = String(totalCoins + sessionCoins).padStart(6, '0');
+    const shopCoins = document.getElementById('shop-coins');
+    if (shopCoins) shopCoins.innerText = String(totalCoins + sessionCoins).padStart(6, '0');
     
     SFX.playLevelWarp();
-    spawnFloatingText(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, `+${addedCredits} COINS PURCHASED!`);
-    alert(`Google Play Purchase Successful! ${addedCredits.toLocaleString()} Credits added.`);
+    spawnFloatingText(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, `+${addedCredits.toLocaleString()} COINS PURCHASED!`);
+    alert(`[Google Play 결제 완료]\n${addedCredits.toLocaleString()} 코인이 정상적으로 지급되었습니다!`);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
