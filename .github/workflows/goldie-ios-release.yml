@@ -103,7 +103,12 @@ jobs:
           else
             openssl pkcs12 -in "$RAW_CERT" -out "$RUNNER_TEMP/cert.pem" -nodes -passin pass:"$P12_PASSWORD"
           fi
-          openssl pkcs12 -export -in "$RUNNER_TEMP/cert.pem" -out "$CERT_PATH" -password pass:1234 -legacy
+          if openssl pkcs12 -help 2>&1 | grep -q '\-legacy'; then
+            LEGACY_FLAG='-legacy'
+          else
+            LEGACY_FLAG=''
+          fi
+          openssl pkcs12 -export -in "$RUNNER_TEMP/cert.pem" -out "$CERT_PATH" -password pass:1234 $LEGACY_FLAG
           security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P 1234 -T /usr/bin/codesign -A
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security list-keychains -s "$KEYCHAIN_PATH"
