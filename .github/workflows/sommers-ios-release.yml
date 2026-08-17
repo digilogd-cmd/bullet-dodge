@@ -1,0 +1,194 @@
+name: Sommers iOS TestFlight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sommers-ios-testflight
+  cancel-in-progress: false
+
+env:
+  BUNDLE_ID: com.sommers.app
+  PROFILE_NAME: AppStore com.sommers.app
+
+jobs:
+  build-sommers-ios:
+    name: Build Sommers and upload to TestFlight
+    runs-on: macos-26
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Sommers source
+        uses: actions/checkout@v4
+        with:
+          repository: digilogd-cmd/sommers-app
+          ref: ios-app-store
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies, build web, sync iOS
+        run: |
+          npm ci
+          npm run build
+          npx cap sync ios
+
+      - name: Prepare App Store Connect key and Sommers profile
+        env:
+          API_KEY_VALUE: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$API_KEY_VALUE"
+          test -n "$API_KEY_ID"
+          test -n "$API_ISSUER_ID"
+
+          API_KEY_PATH="$RUNNER_TEMP/AuthKey_${API_KEY_ID}.p8"
+          if printf '%s' "$API_KEY_VALUE" | grep -q 'BEGIN PRIVATE KEY'; then
+            printf '%s\n' "$API_KEY_VALUE" > "$API_KEY_PATH"
+          else
+            printf '%s' "$API_KEY_VALUE" | tr -d '\n\r ' | base64 --decode > "$API_KEY_PATH"
+          fi
+
+          git clone --depth 1 https://github.com/Apple-Actions/download-provisioning-profiles.git "$RUNNER_TEMP/apple-profiles"
+          "$RUNNER_TEMP/apple-profiles/scripts/create-provisioning-profile.sh" \
+            --bundle-id "$BUNDLE_ID" \
+            --profile-type IOS_APP_STORE \
+            --name "$PROFILE_NAME" \
+            --issuer-id "$API_ISSUER_ID" \
+            --api-key-id "$API_KEY_ID" \
+            --api-private-key-path "$API_KEY_PATH"
+
+          source "$RUNNER_TEMP/apple-profiles/scripts/lib/asc.sh"
+          ASC_ISSUER_ID="$API_ISSUER_ID"
+          ASC_KEY_ID="$API_KEY_ID"
+          ASC_PRIVATE_KEY_PATH="$API_KEY_PATH"
+          asc_load_credentials
+          ENCODED_NAME=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))' "$PROFILE_NAME")
+          asc_api_get "/v1/profiles?filter[name]=${ENCODED_NAME}&filter[profileType]=IOS_APP_STORE&limit=20"
+          PROFILE_ID=$(printf '%s' "$ASC_API_BODY" | jq -r '[.data[] | select(.attributes.profileState == "ACTIVE")][0].id')
+          test -n "$PROFILE_ID"
+          test "$PROFILE_ID" != "null"
+          asc_api_get "/v1/profiles/${PROFILE_ID}"
+          printf '%s' "$ASC_API_BODY" | jq -r '.data.attributes.profileContent' | base64 --decode > "$RUNNER_TEMP/sommers.mobileprovision"
+          test -s "$RUNNER_TEMP/sommers.mobileprovision"
+
+      - name: Install distribution certificate and profile
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APP_STORE_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APP_STORE_P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$CERTIFICATE_BASE64"
+          KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-temp_pwd}"
+          KEYCHAIN_PATH="$RUNNER_TEMP/sommers-signing.keychain-db"
+          RAW_CERT="$RUNNER_TEMP/raw-cert.p12"
+          CERT_PATH="$RUNNER_TEMP/distribution.p12"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+
+          printf '%s' "$CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode > "$RAW_CERT"
+          if openssl pkcs12 -in "$RAW_CERT" -out "$RUNNER_TEMP/cert.pem" -nodes -passin pass:1234 2>/dev/null; then
+            true
+          else
+            openssl pkcs12 -in "$RAW_CERT" -out "$RUNNER_TEMP/cert.pem" -nodes -passin pass:"$P12_PASSWORD"
+          fi
+          if openssl pkcs12 -help 2>&1 | grep -q '\-legacy'; then
+            LEGACY_FLAG='-legacy'
+          else
+            LEGACY_FLAG=''
+          fi
+          openssl pkcs12 -export -in "$RUNNER_TEMP/cert.pem" -out "$CERT_PATH" -password pass:1234 $LEGACY_FLAG
+          security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P 1234 -T /usr/bin/codesign -A
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -s "$KEYCHAIN_PATH"
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$RUNNER_TEMP/sommers.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/sommers.mobileprovision"
+
+      - name: Bump build number
+        run: |
+          set -euo pipefail
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = ${GITHUB_RUN_NUMBER};/g" ios/App/App.xcodeproj/project.pbxproj
+
+      - name: Resolve SPM packages and archive
+        run: |
+          set -euo pipefail
+          cd ios/App
+          xcodebuild -resolvePackageDependencies -workspace App.xcworkspace -scheme App
+          security cms -D -i "$RUNNER_TEMP/sommers.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$RUNNER_TEMP/profile.plist")
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$RUNNER_TEMP/profile.plist")
+
+          xcodebuild archive \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Sommers.xcarchive" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY='Apple Distribution' \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/sommers-signing.keychain-db"
+
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>provisioningProfiles</key><dict>
+              <key>$BUNDLE_ID</key><string>$PROFILE_UUID</string>
+            </dict>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          PLIST
+
+          mkdir -p "$RUNNER_TEMP/sommers-output"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Sommers.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/sommers-output"
+
+      - name: Save IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sommers-iOS-${{ github.run_number }}
+          path: ${{ runner.temp }}/sommers-output/*.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload to TestFlight
+        env:
+          API_KEY_VALUE: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${API_KEY_ID}.p8"
+          if printf '%s' "$API_KEY_VALUE" | grep -q 'BEGIN PRIVATE KEY'; then
+            printf '%s\n' "$API_KEY_VALUE" > "$KEY_PATH"
+          else
+            printf '%s' "$API_KEY_VALUE" | tr -d '\n\r ' | base64 --decode > "$KEY_PATH"
+          fi
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$RUNNER_TEMP"/sommers-output/*.ipa \
+            --apiKey "$API_KEY_ID" \
+            --apiIssuer "$API_ISSUER_ID"
