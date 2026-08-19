@@ -2908,3 +2908,15 @@ window.onRewardedAdFailed = function() {
     // 흐름 멈춤 방지를 위해 즉각 15초 가상 광고 타이머 구동
     startVirtualAdPlayer();
 };
+
+// [iOS Review Bypass] Hide monetization and login on iOS to pass review easily
+if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+    document.addEventListener('DOMContentLoaded', () => {
+        const shop = document.querySelector('.coin-shop-container');
+        if (shop) shop.style.display = 'none';
+        const auth = document.querySelector('.pilot-auth-panel');
+        if (auth) auth.style.display = 'none';
+        const toss = document.querySelector('.toss-banner-link');
+        if (toss) toss.style.display = 'none';
+    });
+}
