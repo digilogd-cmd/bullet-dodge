@@ -287,7 +287,7 @@ if (btnGoogleSignin) {
                 
                 // 앱 시작 시 한 번 호출해주는 것이 좋으나, 여기서 안전하게 초기화
                 window.Capacitor.Plugins.GoogleAuth.initialize({
-                    clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // 대장님이 iOS Client ID로 교체 필요
+                    clientId: '251977968081-ccigebh9fthtcf76v5jonr15m3c0mo9s.apps.googleusercontent.com', // iOS Client ID
                     scopes: ['profile', 'email'],
                     grantOfflineAccess: true,
                 });
@@ -360,7 +360,7 @@ if (btnAppleSignin) {
                 // 네이티브 애플 로그인 (iOS)
                 console.log("🍏 Using Native Apple Sign In Plugin");
                 const response = await window.Capacitor.Plugins.SignInWithApple.authorize({
-                    clientId: 'com.artgourmet.bulletdodge', // Fallback, usually iOS infers from bundle ID
+                    clientId: 'com.retro.bulletdodge', // Fallback, usually iOS infers from bundle ID
                     redirectURI: '',
                     scopes: 'email name'
                 });
