@@ -118,8 +118,13 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/sim-build" \
             CODE_SIGNING_ALLOWED=NO
 
-          APP_PATH=$(find "$RUNNER_TEMP/sim-build/Build/Products" -maxdepth 1 -iname "App.app" | head -1)
-          test -n "$APP_PATH"
+          APP_PATH=$(find "$RUNNER_TEMP/sim-build/Build/Products" -iname "App.app" -type d | head -1)
+          test -n "$APP_PATH" || {
+            echo "::error::Could not find built App.app under $RUNNER_TEMP/sim-build/Build/Products"
+            find "$RUNNER_TEMP/sim-build/Build/Products" -maxdepth 2
+            exit 1
+          }
+          echo "Found app at: $APP_PATH"
 
           xcrun simctl boot "$SIM_UDID"
           xcrun simctl bootstatus "$SIM_UDID" -b
