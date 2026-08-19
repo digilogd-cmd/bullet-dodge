@@ -40,6 +40,31 @@ jobs:
           npm run build
           npx cap sync ios
 
+      - name: Verify web bundle is usable in the webview
+        run: |
+          set -euo pipefail
+          WEB="ios/App/App/public"
+          test -f "$WEB/index.html"
+
+          # A GitHub Pages basePath makes every asset 404 inside the Capacitor
+          # webview, which ships as a blank screen. Build 7 was rejected for this.
+          if grep -q '/Somers-Live-Translator/' "$WEB/index.html"; then
+            echo "::error::index.html still carries the GitHub Pages basePath — the app would launch blank."
+            exit 1
+          fi
+
+          # Client config is compiled in at build time; without it Firebase Auth
+          # cannot initialise and the interpreter cannot reach the backend.
+          grep -rq 'sommers-327af' "$WEB/_next" || {
+            echo "::error::Firebase config missing from the bundle — login would fail."
+            exit 1
+          }
+          grep -rq 'sommers-backend' "$WEB/_next" || {
+            echo "::error::Backend WebSocket URL missing from the bundle — interpretation would fail."
+            exit 1
+          }
+          echo "Web bundle verified: no basePath, Firebase and backend config present."
+
       - name: Prepare App Store Connect key and Sommers profile
         env:
           API_KEY_VALUE: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
@@ -154,6 +179,19 @@ jobs:
           target_attributes = attributes[target.uuid] ||= {}
           target_attributes['ProvisioningStyle'] = 'Manual'
           target_attributes['DevelopmentTeam'] = ENV.fetch('TEAM_ID')
+
+          # `cap add ios` never registered GoogleService-Info.plist with the Xcode
+          # project, so it was absent from the bundle and Firebase/Google Sign-In
+          # could not initialise natively. Register it and copy it as a resource.
+          plist_name = 'GoogleService-Info.plist'
+          app_group = project.main_group['App'] || project.main_group
+          plist_ref = app_group.files.find { |file| file.display_name == plist_name }
+          plist_ref ||= app_group.new_reference(plist_name)
+          resources = target.resources_build_phase
+          unless resources.files_references.include?(plist_ref)
+            resources.add_file_reference(plist_ref)
+          end
+
           project.save
           RUBY
 
@@ -185,6 +223,18 @@ jobs:
             -archivePath "$RUNNER_TEMP/Sommers.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/sommers-output"
+
+      - name: Verify the archived app bundle
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/Sommers.xcarchive/Products/Applications/App.app"
+          test -d "$APP"
+          test -f "$APP/GoogleService-Info.plist" || {
+            echo "::error::GoogleService-Info.plist was not bundled — native Google Sign-In would fail."
+            exit 1
+          }
+          test -d "$APP/public/_next"
+          echo "Archive verified: Firebase plist bundled, web assets present."
 
       - name: Save IPA artifact
         uses: actions/upload-artifact@v4
