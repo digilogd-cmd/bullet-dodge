@@ -9,8 +9,11 @@
     "cap:add:ios": "cap add ios"
   },
   "dependencies": {
+    "@capacitor-community/apple-sign-in": "^6.0.0",
     "@capacitor/core": "^6.0.0",
-    "@capacitor/ios": "^6.0.0"
+    "@capacitor/ios": "^6.0.0",
+    "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
+    "cordova-plugin-purchase": "^13.18.0"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

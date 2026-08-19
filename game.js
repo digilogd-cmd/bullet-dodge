@@ -2908,15 +2908,92 @@ window.onRewardedAdFailed = function() {
     // 흐름 멈춤 방지를 위해 즉각 15초 가상 광고 타이머 구동
     startVirtualAdPlayer();
 };
+// [IAP] Native Apple In-App Purchase with cordova-plugin-purchase (v13+)
+let nativeStoreReady = false;
 
-// [iOS Review Bypass] Hide monetization and login on iOS to pass review easily
+function initNativeIAP() {
+    if (!window.CdvPurchase) {
+        console.log("🍏 CdvPurchase plugin not found (running in pure web?).");
+        return;
+    }
+    
+    console.log("🍏 Initializing Native Apple In-App Purchase...");
+    const store = window.CdvPurchase.store;
+    
+    store.register([{
+        type: CdvPurchase.ProductType.CONSUMABLE,
+        id: 'pack_starter',
+        platform: CdvPurchase.Platform.APPLE_APPSTORE,
+    }, {
+        type: CdvPurchase.ProductType.CONSUMABLE,
+        id: 'pack_booster',
+        platform: CdvPurchase.Platform.APPLE_APPSTORE,
+    }]);
+
+    store.when()
+        .approved(p => p.verify())
+        .verified(p => p.finish())
+        .finished(p => {
+            console.log("✅ Apple IAP Finished:", p.id);
+            if(p.id === 'pack_starter') completeNativePurchase(10000);
+            if(p.id === 'pack_booster') completeNativePurchase(30000);
+        });
+
+    store.initialize();
+    nativeStoreReady = true;
+}
+
+function requestNativePayment(productId) {
+    if (!nativeStoreReady || !window.CdvPurchase) {
+        alert("Apple 결제 시스템이 초기화되지 않았습니다. 아이폰 실기기에서 테스트해주세요.");
+        return;
+    }
+    
+    const store = window.CdvPurchase.store;
+    if (store.get(productId)) {
+        store.order(productId);
+    } else {
+        alert("상품을 찾을 수 없습니다. App Store Connect에 상품이 등록되어 있는지 확인하세요.");
+    }
+}
+
+function completeNativePurchase(addedCredits) {
+    if (typeof totalCoins !== 'undefined') {
+        totalCoins += addedCredits;
+        localStorage.setItem('cyber_avoid_coins', totalCoins);
+        if (typeof updateHangarUI === 'function') updateHangarUI();
+        if (typeof updateHUD === 'function') updateHUD();
+        if (typeof syncGameDataToCloud === 'function') syncGameDataToCloud();
+        if (typeof SFX !== 'undefined') SFX.playGraze();
+        alert(`[Apple 결제 완료]\n${addedCredits.toLocaleString()} 코인이 지급되었습니다!`);
+    }
+}
+
+// iOS Specific UI adjustments and IAP Binding
 if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
     document.addEventListener('DOMContentLoaded', () => {
-        const shop = document.querySelector('.coin-shop-container');
-        if (shop) shop.style.display = 'none';
-        const auth = document.querySelector('.pilot-auth-panel');
-        if (auth) auth.style.display = 'none';
+        // Toss 앱 버튼 숨기기 (타 플랫폼 언급 금지 규정 준수)
         const toss = document.querySelector('.toss-banner-link');
         if (toss) toss.style.display = 'none';
+        
+        // Google Play 버튼을 Apple IAP 버튼으로 변경
+        const googlePayBtn = document.getElementById('btn-google-pay');
+        if (googlePayBtn) {
+            googlePayBtn.innerHTML = '🍎 PURCHASE WITH APPLE IAP';
+            googlePayBtn.id = 'btn-apple-pay'; 
+            
+            // 기존 이벤트 리스너 제거 및 교체 (클론 트릭)
+            const newAppleBtn = googlePayBtn.cloneNode(true);
+            googlePayBtn.parentNode.replaceChild(newAppleBtn, googlePayBtn);
+            
+            newAppleBtn.addEventListener('click', () => {
+                if (typeof SFX !== 'undefined') SFX.playBeep();
+                const sku = selectedPackagePrice === '0.99' ? 'pack_starter' : 'pack_booster';
+                requestNativePayment(sku);
+            });
+        }
+        
+        // IAP 시스템 초기화 (지연 호출하여 cordova 플러그인 로드 보장)
+        setTimeout(initNativeIAP, 1000);
     });
 }

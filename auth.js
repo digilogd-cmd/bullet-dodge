@@ -257,7 +257,7 @@ async function syncGameDataToCloud() {
 // 5. Auth Processors (실제 & 모의 로그인 핸들러)
 // ============================================================================
 
-// [A] 구글 간편 로그인
+// [A] 구글 간편 로그인 (iOS 앱스토어 및 안드로이드 네이티브 플러그인 적용)
 if (btnGoogleSignin) {
     btnGoogleSignin.addEventListener('click', async () => {
         if (typeof SFX !== 'undefined') SFX.playBeep();
@@ -279,15 +279,30 @@ if (btnGoogleSignin) {
 
         try {
             btnGoogleSignin.disabled = true;
-            btnGoogleSignin.innerText = '로그인 중...';
+            btnGoogleSignin.innerHTML = '<span style="font-size: 1.1rem;">🌐</span> 로그인 중...';
             
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-            
-            // WebView 환경에서는 signInWithPopup 사용
-            // (redirect 방식은 file:// 프로토콜 / WebView에서 동작 안 함)
-            const result = await auth.signInWithPopup(provider);
-            const user = result.user;
+            let user;
+            if (window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins.GoogleAuth) {
+                console.log("🍏 Using Native Google Sign In Plugin");
+                
+                // 앱 시작 시 한 번 호출해주는 것이 좋으나, 여기서 안전하게 초기화
+                window.Capacitor.Plugins.GoogleAuth.initialize({
+                    clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // 대장님이 iOS Client ID로 교체 필요
+                    scopes: ['profile', 'email'],
+                    grantOfflineAccess: true,
+                });
+                
+                const response = await window.Capacitor.Plugins.GoogleAuth.signIn();
+                const credential = firebase.auth.GoogleAuthProvider.credential(response.authentication.idToken);
+                const result = await auth.signInWithCredential(credential);
+                user = result.user;
+            } else {
+                console.log("🌐 Using Web Popup Google Sign In");
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                const result = await auth.signInWithPopup(provider);
+                user = result.user;
+            }
             
             console.log('✅ Google 로그인 성공! UID:', user.uid);
             updatePilotProfileUI(user);
@@ -298,13 +313,12 @@ if (btnGoogleSignin) {
             
             alert(`환영합니다, ${user.displayName || '파일럿'}님! 데이터 동기화 완료.`);
         } catch (error) {
-            console.error("Google 로그인 에러:", error.code, error.message);
+            console.error("Google 로그인 에러:", error);
             
             // WebView에서 팝업 차단 시 안내
             if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-allowed') {
                 alert("Google 로그인을 사용하려면 Firebase 콘솔에서\n'Google 로그인 공급자'를 활성화해주세요.\n\n또는 이메일/비밀번호로 로그인해 주세요.");
             } else if (error.code === 'auth/popup-closed-by-user') {
-                // 사용자가 팝업을 닫은 경우 - 조용히 무시
                 console.log('사용자가 로그인 창을 닫았습니다.');
             } else {
                 alert("Google 로그인에 실패했습니다.\n" + (error.message || '알 수 없는 오류'));
@@ -312,13 +326,13 @@ if (btnGoogleSignin) {
         } finally {
             if (btnGoogleSignin) {
                 btnGoogleSignin.disabled = false;
-                btnGoogleSignin.innerText = '🌐 GOOGLE QUICK SIGN IN';
+                btnGoogleSignin.innerHTML = '<span style="font-size: 1.1rem;">🌐</span> GOOGLE QUICK SIGN IN';
             }
         }
     });
 }
 
-// [A-2] Apple 간편 로그인 (iOS 앱스토어 가이드라인 4.8조 대응)
+// [A-2] Apple 간편 로그인 (iOS 앱스토어 가이드라인 4.8조 대응 및 네이티브 플러그인 적용)
 if (btnAppleSignin) {
     btnAppleSignin.addEventListener('click', async () => {
         if (typeof SFX !== 'undefined') SFX.playBeep();
@@ -341,12 +355,32 @@ if (btnAppleSignin) {
             btnAppleSignin.disabled = true;
             btnAppleSignin.innerText = '로그인 중...';
             
-            const provider = new firebase.auth.OAuthProvider('apple.com');
-            provider.addScope('email');
-            provider.addScope('name');
-            
-            const result = await auth.signInWithPopup(provider);
-            const user = result.user;
+            let user;
+            if (window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins.SignInWithApple) {
+                // 네이티브 애플 로그인 (iOS)
+                console.log("🍏 Using Native Apple Sign In Plugin");
+                const response = await window.Capacitor.Plugins.SignInWithApple.authorize({
+                    clientId: 'com.artgourmet.bulletdodge', // Fallback, usually iOS infers from bundle ID
+                    redirectURI: '',
+                    scopes: 'email name'
+                });
+                
+                const provider = new firebase.auth.OAuthProvider('apple.com');
+                const credential = provider.credential({
+                    idToken: response.response.identityToken
+                });
+                
+                const result = await auth.signInWithCredential(credential);
+                user = result.user;
+            } else {
+                // 웹뷰/브라우저 애플 로그인
+                console.log("🌐 Using Web Popup Apple Sign In");
+                const provider = new firebase.auth.OAuthProvider('apple.com');
+                provider.addScope('email');
+                provider.addScope('name');
+                const result = await auth.signInWithPopup(provider);
+                user = result.user;
+            }
             
             console.log('✅ Apple 로그인 성공! UID:', user.uid);
             updatePilotProfileUI(user);
@@ -355,7 +389,7 @@ if (btnAppleSignin) {
             await syncAndLoadUserData(user.uid, user.email || 'apple_pilot@icloud.com');
             alert(`환영합니다, ${user.displayName || '애플 파일럿'}님! 데이터 동기화 완료.`);
         } catch (error) {
-            console.error("Apple 로그인 에러:", error.code, error.message);
+            console.error("Apple 로그인 에러:", error);
             if (error.code === 'auth/popup-closed-by-user') {
                 console.log('사용자가 Apple 로그인 창을 닫았습니다.');
             } else {
@@ -364,7 +398,7 @@ if (btnAppleSignin) {
         } finally {
             if (btnAppleSignin) {
                 btnAppleSignin.disabled = false;
-                btnAppleSignin.innerText = '🍎 SIGN IN WITH APPLE';
+                btnAppleSignin.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="16" height="16"><path fill="#ffffff" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg> SIGN IN WITH APPLE';
             }
         }
     });
