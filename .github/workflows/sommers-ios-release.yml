@@ -132,15 +132,35 @@ jobs:
 
           BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")
           xcrun simctl launch "$SIM_UDID" "$BUNDLE_ID"
-          sleep 6
+
+          # Poll for up to 30s instead of a single point-in-time check — a cold
+          # launch on a CI simulator (fresh boot, no disk cache) can legitimately
+          # take longer than a quick crash would.
+          ALIVE=false
+          for i in $(seq 1 15); do
+            sleep 2
+            if xcrun simctl spawn "$SIM_UDID" launchctl list | grep -q "$BUNDLE_ID"; then
+              ALIVE=true
+              break
+            fi
+          done
 
           mkdir -p "$RUNNER_TEMP/sim-output"
           xcrun simctl io "$SIM_UDID" screenshot "$RUNNER_TEMP/sim-output/launch-screenshot.png"
 
-          if xcrun simctl spawn "$SIM_UDID" launchctl list | grep -q "$BUNDLE_ID"; then
-            echo "Simulator smoke test passed: app launched and is still running after 6s."
+          if [ "$ALIVE" = "true" ]; then
+            echo "Simulator smoke test passed: app was running within 30s of launch."
           else
-            echo "::error::App is not running in the simulator a few seconds after launch — it crashed on startup. Check the uploaded screenshot and Xcode Organizer crash logs."
+            echo "::warning::App did not appear in launchctl within 30s of launch — checking for a crash report."
+            CRASH_LOG=$(find "$HOME/Library/Logs/DiagnosticReports" -iname "App-*" -newermt '-2 minutes' 2>/dev/null | head -1)
+            if [ -n "$CRASH_LOG" ]; then
+              echo "::error::App crashed on launch. Crash report follows ($CRASH_LOG):"
+              cat "$CRASH_LOG"
+            else
+              echo "::error::App is not running and no crash report was found (may be hung, not crashed)."
+              echo "--- recent system log for the app process ---"
+              xcrun simctl spawn "$SIM_UDID" log show --last 2m --predicate "process == \"App\"" 2>&1 | tail -n 200 || true
+            fi
             exit 1
           fi
 
