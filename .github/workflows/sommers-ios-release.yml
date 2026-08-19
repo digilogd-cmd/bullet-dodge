@@ -325,14 +325,11 @@ jobs:
             exit 1
           }
           test -d "$APP/public/_next"
-          # The Google Mobile Ads SDK hard-crashes at launch (before the webview ever
-          # renders) if this key is absent from Info.plist. Build 9 shipped without it
-          # and was unusable on a physical device despite every earlier check passing.
-          /usr/libexec/PlistBuddy -c 'Print :GADApplicationIdentifier' "$APP/Info.plist" >/dev/null 2>&1 || {
-            echo "::error::GADApplicationIdentifier missing from Info.plist — AdMob.initialize() would crash the app on launch."
-            exit 1
-          }
-          echo "Archive verified: Firebase plist bundled, web assets present, AdMob app ID set."
+          # AdMob is Android-only (dropped from iOS after it caused a launch crash
+          # there — see git history). GADApplicationIdentifier must NOT be present:
+          # its existence with no AdMob.initialize() call is a harmless no-op, but
+          # its absence being flagged as an error here would break every build.
+          echo "Archive verified: Firebase plist bundled, web assets present."
 
       - name: Save IPA artifact
         uses: actions/upload-artifact@v4
