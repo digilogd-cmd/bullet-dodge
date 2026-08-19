@@ -13,7 +13,7 @@
 | **번들 ID (Bundle ID)** | `com.retro.bulletdodge` |
 | **웹 게임 엔진 경로** | `E:\안티그래비티\bullet-dodge` |
 | **안드로이드 프로젝트 경로** | `E:\bullet_dodge_android` |
-| **안드로이드 최신 버전** | `v1.0.14` (VersionCode `15`) |
+| **안드로이드 최신 버전** | `v1.0.15` (VersionCode `16`) |
 | **스토어 라이브 URL** | [Google Play Store](https://play.google.com/store/apps/details?id=com.retro.bulletdodge) |
 
 ---

@@ -145,7 +145,7 @@
                 <div id="overlay-start" class="game-overlay active">
                     <div class="overlay-content">
                         <h2 class="arcade-title pulse-glow">RETRO DODGE</h2>
-                        <p class="overlay-desc">총알을 피해 살아남으십시오.<br>코인을 모아 기체를 업그레이드하세요.<br><span style="font-size: 0.85em; opacity: 0.8;">Survive the bullets.<br>Collect coins to upgrade.</span></p>
+                        <p class="overlay-desc font-orbitron" style="font-size: 1.1rem; letter-spacing: 2px;">SURVIVE THE BULLETS.<br>COLLECT COINS TO UPGRADE.<br><span style="font-size: 0.65em; color: var(--neon-cyan); letter-spacing: 0;">총알을 피해 살아남으십시오. 코인을 모아 기체를 업그레이드하세요.</span></p>
                         <button id="btn-start" class="neon-btn font-orbitron">MISSION START</button>
                         <button id="btn-open-hangar" class="neon-btn btn-pink font-orbitron" style="margin-top: 10px; width: 220px; font-size: 0.8rem; padding: 10px 0;">HANGAR / SHOP</button>
                         
@@ -169,38 +169,38 @@
                         <div class="ship-select-container">
                             <div class="ship-card active" data-ship-id="default">
                                 <div class="ship-name">NEO PILOT</div>
-                                <div class="ship-desc">기본형 기체 (평균 능력치)</div>
+                                <div class="ship-desc">DEFAULT SHIP (BALANCED)<br><span style="font-size: 0.75em; opacity: 0.7;">기본형 기체 (평균 능력치)</span></div>
                                 <div class="ship-specs">SPD: 1.0x | MAG: 40px | HIT: 100%</div>
                                 <button class="btn-ship-action neon-btn-small" data-ship-id="default">EQUIPPED</button>
                             </div>
                             <div class="ship-card" data-ship-id="magnet">
                                 <div class="ship-name text-cyan">MAGNET VORTEX</div>
-                                <div class="ship-desc">코인 인력 강화 (파밍 특화)</div>
+                                <div class="ship-desc">MAGNETIC PULL INCREASED (FARMING)<br><span style="font-size: 0.75em; opacity: 0.7;">코인 인력 강화 (파밍 특화)</span></div>
                                 <div class="ship-specs">SPD: 0.95x | MAG: 130px | HIT: 100%</div>
                                 <button class="btn-ship-action neon-btn-small" data-ship-id="magnet">BUY: 3000₵</button>
                             </div>
                             <div class="ship-card" data-ship-id="aegis">
                                 <div class="ship-name text-purple">AEGIS COMMANDER</div>
-                                <div class="ship-desc">실드 용량 증가 (생존 특화)</div>
+                                <div class="ship-desc">SHIELD CAPACITY INCREASED (SURVIVAL)<br><span style="font-size: 0.75em; opacity: 0.7;">실드 용량 증가 (생존 특화)</span></div>
                                 <div class="ship-specs">SPD: 0.85x | MAG: 30px | HIT: 140%</div>
                                 <button class="btn-ship-action neon-btn-small" data-ship-id="aegis">BUY: 5000₵</button>
                             </div>
                             <div class="ship-card" data-ship-id="swift">
                                 <div class="ship-name text-pink">SWIFT RAVEN</div>
-                                <div class="ship-desc">기체 크기 감소 및 속도 증가 (회피 특화)</div>
+                                <div class="ship-desc">SMALLER HITBOX & SPEED (EVASION)<br><span style="font-size: 0.75em; opacity: 0.7;">기체 크기 감소 및 속도 증가 (회피 특화)</span></div>
                                 <div class="ship-specs">SPD: 1.15x | MAG: 40px | HIT: 85%</div>
                                 <button class="btn-ship-action neon-btn-small" data-ship-id="swift">BUY: 8000₵</button>
                             </div>
                             <!-- 🐕 대표님의 골든 리트리버 스페셜 스킨 추가 -->
                             <div class="ship-card" data-ship-id="goldie">
                                 <div class="ship-name text-yellow">GOLDIE VOYAGER</div>
-                                <div class="ship-desc">우주복을 입은 골든 리트리버! (코인 대폭 인력)</div>
+                                <div class="ship-desc">GOLDEN RETRIEVER! (HUGE COIN PULL)<br><span style="font-size: 0.75em; opacity: 0.7;">우주복을 입은 골든 리트리버! (코인 대폭 인력)</span></div>
                                 <div class="ship-specs">SPD: 1.05x | MAG: 150px | HIT: 90%</div>
                                 <button class="btn-ship-action neon-btn-small" data-ship-id="goldie">BUY: 10000₵</button>
                             </div>
                             <div class="ship-card" data-ship-id="buddy">
                                 <div class="ship-name text-green">CYBER BUDDY</div>
-                                <div class="ship-desc">제트팩을 장착한 크림 리트리버! (실드 15초 자동 회복)</div>
+                                <div class="ship-desc">CREAM RETRIEVER! (AUTO SHIELD 15s)<br><span style="font-size: 0.75em; opacity: 0.7;">제트팩을 장착한 크림 리트리버! (실드 15초 자동 회복)</span></div>
                                 <div class="ship-specs">SPD: 0.95x | MAG: 55px | HIT: 100%</div>
                                 <button class="btn-ship-action neon-btn-small" data-ship-id="buddy">BUY: 12000₵</button>
                             </div>
@@ -266,7 +266,7 @@
                 <div id="overlay-revive" class="game-overlay">
                     <div class="overlay-content" style="gap: 15px;">
                         <h2 class="arcade-title text-yellow blink-fast" style="font-size: 1.3rem;">EMERGENCY PROTOCOL</h2>
-                        <p class="overlay-desc">함선 격침 위기! 부활 시스템을 작동하시겠습니까?</p>
+                        <p class="overlay-desc font-orbitron" style="font-size: 1rem; letter-spacing: 1px;">MISSION FAILED! INITIATE REVIVAL?<br><span style="font-size: 0.65em; color: var(--neon-cyan); letter-spacing: 0;">임무 실패! 부활 시스템을 가동하시겠습니까?</span></p>
                         
                         <div class="revive-timer font-arcade" id="revive-countdown" style="font-size: 2.2rem; color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); margin: 5px 0;">6</div>
                         
@@ -326,7 +326,7 @@
                 <div id="overlay-paused" class="game-overlay">
                     <div class="overlay-content">
                         <h2 class="arcade-title text-yellow">PAUSED</h2>
-                        <p class="overlay-desc">게임이 잠시 정지되었습니다.</p>
+                        <p class="overlay-desc font-orbitron" style="font-size: 1rem; letter-spacing: 1px;">SYSTEM PAUSED.<br><span style="font-size: 0.65em; color: var(--neon-cyan); letter-spacing: 0;">게임이 잠시 정지되었습니다.</span></p>
                         <button id="btn-resume" class="neon-btn font-orbitron" style="margin-bottom: 12px;">RESUME MISSION</button>
                         <button id="btn-quit" class="neon-btn font-orbitron btn-pink">QUIT MISSION</button>
                     </div>
@@ -425,9 +425,9 @@
                     <span style="font-size: 1.1rem;">🌐</span> GOOGLE QUICK SIGN IN
                 </button>
 
-                <!-- Apple 원터치 로그인 (iOS 필수 요구사항 대응) -->
+                <!-- Apple 원터치 로그인 -->
                 <button id="btn-apple-signin" class="neon-btn font-orbitron" style="width: 100%; border-color: #ffffff; color: #ffffff; background: #000000; font-size: 0.85rem; padding: 12px 0; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 2px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);">
-                    SIGN IN WITH APPLE
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="16" height="16"><path fill="#ffffff" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg> SIGN IN WITH APPLE
                 </button>
             </div>
         </div>
