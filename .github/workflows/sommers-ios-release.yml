@@ -65,6 +65,91 @@ jobs:
           }
           echo "Web bundle verified: no basePath, Firebase and backend config present."
 
+      - name: Bump build number
+        run: |
+          set -euo pipefail
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = ${GITHUB_RUN_NUMBER};/g" ios/App/App.xcodeproj/project.pbxproj
+
+      - name: Register native config files in the Xcode project
+        run: |
+          set -euo pipefail
+          cd ios/App
+          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
+
+          # `cap add ios` never registered GoogleService-Info.plist with the Xcode
+          # project, so it was absent from the bundle and Firebase/Google Sign-In
+          # could not initialise natively. Register it and copy it as a resource.
+          # Done once here so both the simulator smoke test and the signed archive
+          # pick it up.
+          gem install xcodeproj --no-document
+          ruby <<'RUBY'
+          require 'xcodeproj'
+          project = Xcodeproj::Project.open('App.xcodeproj')
+          target = project.targets.find { |item| item.name == 'App' }
+          abort('App target not found') unless target
+
+          plist_name = 'GoogleService-Info.plist'
+          app_group = project.main_group['App'] || project.main_group
+          plist_ref = app_group.files.find { |file| file.display_name == plist_name }
+          plist_ref ||= app_group.new_reference(plist_name)
+          resources = target.resources_build_phase
+          unless resources.files_references.include?(plist_ref)
+            resources.add_file_reference(plist_ref)
+          end
+
+          project.save
+          RUBY
+
+      - name: Smoke test in iOS Simulator (catches launch crashes before signing)
+        run: |
+          set -euo pipefail
+          cd ios/App
+
+          SIM_LINE=$(xcrun simctl list devices available | grep -m1 'iPhone')
+          SIM_UDID=$(echo "$SIM_LINE" | grep -oE '[0-9A-Fa-f-]{36}')
+          test -n "$SIM_UDID"
+          echo "Using simulator: $SIM_LINE"
+
+          xcodebuild build \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination "id=$SIM_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/sim-build" \
+            CODE_SIGNING_ALLOWED=NO
+
+          APP_PATH=$(find "$RUNNER_TEMP/sim-build/Build/Products" -maxdepth 1 -iname "App.app" | head -1)
+          test -n "$APP_PATH"
+
+          xcrun simctl boot "$SIM_UDID"
+          xcrun simctl bootstatus "$SIM_UDID" -b
+          xcrun simctl install "$SIM_UDID" "$APP_PATH"
+
+          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")
+          xcrun simctl launch "$SIM_UDID" "$BUNDLE_ID"
+          sleep 6
+
+          mkdir -p "$RUNNER_TEMP/sim-output"
+          xcrun simctl io "$SIM_UDID" screenshot "$RUNNER_TEMP/sim-output/launch-screenshot.png"
+
+          if xcrun simctl spawn "$SIM_UDID" launchctl list | grep -q "$BUNDLE_ID"; then
+            echo "Simulator smoke test passed: app launched and is still running after 6s."
+          else
+            echo "::error::App is not running in the simulator a few seconds after launch — it crashed on startup. Check the uploaded screenshot and Xcode Organizer crash logs."
+            exit 1
+          fi
+
+          xcrun simctl shutdown "$SIM_UDID" || true
+
+      - name: Save simulator launch screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sommers-Simulator-Launch-${{ github.run_number }}
+          path: ${{ runner.temp }}/sim-output/launch-screenshot.png
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Prepare App Store Connect key and Sommers profile
         env:
           API_KEY_VALUE: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
@@ -143,23 +228,17 @@ jobs:
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp "$RUNNER_TEMP/sommers.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/sommers.mobileprovision"
 
-      - name: Bump build number
-        run: |
-          set -euo pipefail
-          sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = ${GITHUB_RUN_NUMBER};/g" ios/App/App.xcodeproj/project.pbxproj
-
       - name: Resolve SPM packages and archive
         run: |
           set -euo pipefail
           cd ios/App
-          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
           security cms -D -i "$RUNNER_TEMP/sommers.mobileprovision" > "$RUNNER_TEMP/profile.plist"
           export TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$RUNNER_TEMP/profile.plist")
 
           # Apply manual distribution signing only to the native App target.
           # Command-line signing overrides are intentionally avoided because
           # they also propagate to unsigned SPM resource bundle targets.
-          gem install xcodeproj --no-document
+          # (GoogleService-Info.plist was already registered in the previous step.)
           ruby <<'RUBY'
           require 'xcodeproj'
           project = Xcodeproj::Project.open('App.xcodeproj')
@@ -179,19 +258,6 @@ jobs:
           target_attributes = attributes[target.uuid] ||= {}
           target_attributes['ProvisioningStyle'] = 'Manual'
           target_attributes['DevelopmentTeam'] = ENV.fetch('TEAM_ID')
-
-          # `cap add ios` never registered GoogleService-Info.plist with the Xcode
-          # project, so it was absent from the bundle and Firebase/Google Sign-In
-          # could not initialise natively. Register it and copy it as a resource.
-          plist_name = 'GoogleService-Info.plist'
-          app_group = project.main_group['App'] || project.main_group
-          plist_ref = app_group.files.find { |file| file.display_name == plist_name }
-          plist_ref ||= app_group.new_reference(plist_name)
-          resources = target.resources_build_phase
-          unless resources.files_references.include?(plist_ref)
-            resources.add_file_reference(plist_ref)
-          end
-
           project.save
           RUBY
 
