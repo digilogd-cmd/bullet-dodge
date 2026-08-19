@@ -2820,7 +2820,7 @@ window.onNativePurchaseSuccess = function(productId) {
     if (productId === 'pack_starter') {
         addedCredits = 10000;
     } else if (productId === 'pack_booster') {
-        addedCredits = 30000;
+        addedCredits = 40000;
     } else {
         addedCredits = 10000;
     }
