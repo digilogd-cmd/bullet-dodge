@@ -350,11 +350,23 @@ jobs:
             exit 1
           }
           test -d "$APP/public/_next"
-          # AdMob is Android-only (dropped from iOS after it caused a launch crash
-          # there — see git history). GADApplicationIdentifier must NOT be present:
-          # its existence with no AdMob.initialize() call is a harmless no-op, but
-          # its absence being flagged as an error here would break every build.
-          echo "Archive verified: Firebase plist bundled, web assets present."
+          # AdMob must not be LINKED into the iOS binary at all. The Google Mobile
+          # Ads SDK runs a startup check that kills the app at launch whenever
+          # GADApplicationIdentifier is missing from Info.plist — even if JS never
+          # calls the plugin. Builds 14-16 shipped exactly that combination (SDK
+          # linked, key removed) and crashed on the physical device, because the
+          # "remove AdMob from iOS" change only gated the JS calls. The real
+          # removal is ios.includePlugins in capacitor.config.json; this gate
+          # proves it worked on every build.
+          if grep -aq 'GADApplicationIdentifier' "$APP/App"; then
+            echo "::error::Google Mobile Ads SDK is still linked into the iOS binary — it will crash the app at launch without GADApplicationIdentifier. Check ios.includePlugins in capacitor.config.json."
+            exit 1
+          fi
+          if grep -q 'AdMobPlugin' "$APP/capacitor.config.json"; then
+            echo "::error::AdMobPlugin still appears in the bundled packageClassList — cap sync did not respect ios.includePlugins."
+            exit 1
+          fi
+          echo "Archive verified: Firebase plist bundled, web assets present, AdMob absent from binary."
 
       - name: Save IPA artifact
         uses: actions/upload-artifact@v4
