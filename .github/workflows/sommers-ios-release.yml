@@ -136,6 +136,12 @@ jobs:
           }
           echo "Found app at: $APP_PATH"
 
+          # Package the Simulator build so it can be downloaded and dragged onto a
+          # booted Simulator window -- no Xcode project, Node, or CLI tooling needed
+          # on the receiving Mac, just Xcode + Simulator.app installed.
+          mkdir -p "$RUNNER_TEMP/sim-output"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$RUNNER_TEMP/sim-output/Sommers-Simulator.app.zip"
+
           xcrun simctl boot "$SIM_UDID"
           xcrun simctl bootstatus "$SIM_UDID" -b
           xcrun simctl install "$SIM_UDID" "$APP_PATH"
@@ -182,6 +188,15 @@ jobs:
         with:
           name: Sommers-Simulator-Launch-${{ github.run_number }}
           path: ${{ runner.temp }}/sim-output/launch-screenshot.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Save Simulator app build (drag onto a booted Simulator to install)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sommers-Simulator-App-${{ github.run_number }}
+          path: ${{ runner.temp }}/sim-output/Sommers-Simulator.app.zip
           if-no-files-found: warn
           retention-days: 14
 
