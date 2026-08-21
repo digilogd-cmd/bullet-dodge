@@ -70,11 +70,20 @@ jobs:
           set -euo pipefail
           sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = ${GITHUB_RUN_NUMBER};/g" ios/App/App.xcodeproj/project.pbxproj
 
+      - name: Install pods
+        # The project migrated from SPM to CocoaPods because
+        # @codetrix-studio/capacitor-google-auth ships only a podspec — under
+        # SPM its native code silently never compiled, which is why every
+        # device build reported '"GoogleAuth" plugin is not implemented on ios'.
+        run: |
+          set -euo pipefail
+          cd ios/App
+          pod install
+
       - name: Register native config files in the Xcode project
         run: |
           set -euo pipefail
           cd ios/App
-          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
 
           # `cap add ios` never registered GoogleService-Info.plist with the Xcode
           # project, so it was absent from the bundle and Firebase/Google Sign-In
@@ -131,7 +140,7 @@ jobs:
           echo "Using simulator: $SIM_LINE"
 
           xcodebuild build \
-            -project App.xcodeproj \
+            -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -destination "id=$SIM_UDID" \
@@ -288,7 +297,7 @@ jobs:
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp "$RUNNER_TEMP/sommers.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/sommers.mobileprovision"
 
-      - name: Resolve SPM packages and archive
+      - name: Archive and export
         run: |
           set -euo pipefail
           cd ios/App
@@ -322,7 +331,7 @@ jobs:
           RUBY
 
           xcodebuild archive \
-            -project App.xcodeproj \
+            -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -destination 'generic/platform=iOS' \
@@ -384,7 +393,16 @@ jobs:
             echo "::error::com.apple.developer.applesignin entitlement is not present in the signed app — native Sign In with Apple will fail with an authorization error."
             exit 1
           }
-          echo "Archive verified: Firebase plist bundled, web assets present, AdMob absent from binary, Sign In with Apple entitlement signed."
+          # Google Sign-In's native code must actually be compiled in. Under the
+          # old SPM setup the CocoaPods-only google-auth plugin was silently
+          # skipped on every build (runtime error: '"GoogleAuth" plugin is not
+          # implemented on ios') while the build stayed green. Search the app
+          # binary and embedded frameworks for the GoogleSignIn SDK.
+          if ! grep -arq 'GIDSignIn' "$APP"; then
+            echo "::error::GoogleSignIn native code is absent from the app — Google login would report 'plugin is not implemented on ios'. Did pod install run, and is CodetrixStudioCapacitorGoogleAuth in the Podfile?"
+            exit 1
+          fi
+          echo "Archive verified: Firebase plist bundled, web assets present, AdMob absent, Apple entitlement signed, GoogleSignIn compiled in."
 
       - name: Save IPA artifact
         uses: actions/upload-artifact@v4
