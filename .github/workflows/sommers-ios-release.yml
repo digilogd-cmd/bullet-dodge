@@ -97,6 +97,16 @@ jobs:
             resources.add_file_reference(plist_ref)
           end
 
+          # Sign In with Apple was only ever enabled on the App ID in the Apple
+          # Developer portal -- the Xcode project itself never declared the
+          # matching entitlement, so ASAuthorizationAppleIDProvider always failed
+          # on device (no .entitlements file, no CODE_SIGN_ENTITLEMENTS build
+          # setting existed anywhere in this project). App.entitlements now exists
+          # in the repo; wire it in here so every build actually signs with it.
+          target.build_configurations.each do |config|
+            config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'App/App.entitlements'
+          end
+
           project.save
           RUBY
 
@@ -366,7 +376,15 @@ jobs:
             echo "::error::AdMobPlugin still appears in the bundled packageClassList — cap sync did not respect ios.includePlugins."
             exit 1
           fi
-          echo "Archive verified: Firebase plist bundled, web assets present, AdMob absent from binary."
+          # Sign In with Apple always failed on device because no entitlements
+          # file existed anywhere in this project (App ID had the capability
+          # toggled on in the Apple Developer portal, but the app itself never
+          # requested it). Confirm the signed binary actually carries it now.
+          codesign -d --entitlements :- "$APP" 2>/dev/null | grep -q 'com.apple.developer.applesignin' || {
+            echo "::error::com.apple.developer.applesignin entitlement is not present in the signed app — native Sign In with Apple will fail with an authorization error."
+            exit 1
+          }
+          echo "Archive verified: Firebase plist bundled, web assets present, AdMob absent from binary, Sign In with Apple entitlement signed."
 
       - name: Save IPA artifact
         uses: actions/upload-artifact@v4
