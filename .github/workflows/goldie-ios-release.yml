@@ -34,7 +34,15 @@ jobs:
           cache: npm
 
       - name: Install dependencies and sync iOS
+        env:
+          IOS_ADMOB_APP_ID: ${{ secrets.GOLDIE_IOS_ADMOB_APP_ID }}
+          IOS_ADMOB_BANNER_ID: ${{ secrets.GOLDIE_IOS_ADMOB_BANNER_ID }}
+          IOS_ADMOB_INTERSTITIAL_ID: ${{ secrets.GOLDIE_IOS_ADMOB_INTERSTITIAL_ID }}
         run: |
+          set -euo pipefail
+          test -n "$IOS_ADMOB_APP_ID"
+          test -n "$IOS_ADMOB_BANNER_ID"
+          test -n "$IOS_ADMOB_INTERSTITIAL_ID"
           npm ci
           npm run ios:sync
 
