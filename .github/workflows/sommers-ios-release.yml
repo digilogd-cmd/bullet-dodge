@@ -402,7 +402,19 @@ jobs:
             echo "::error::GoogleSignIn native code is absent from the app — Google login would report 'plugin is not implemented on ios'. Did pod install run, and is CodetrixStudioCapacitorGoogleAuth in the Podfile?"
             exit 1
           fi
-          echo "Archive verified: Firebase plist bundled, web assets present, AdMob absent, Apple entitlement signed, GoogleSignIn compiled in."
+          # Apple rejected build 22 with ITMS-91061 (missing privacy manifest) for
+          # GTMAppAuth, GTMSessionFetcher and GoogleSignIn — CodetrixStudioCapacitorGoogleAuth's
+          # podspec was hard-pinned to GoogleSignIn ~> 6.2.4, a 2022-era release that
+          # predates Apple's privacy-manifest requirement entirely (the manifest first
+          # shipped in GoogleSignIn 7.1.0). Bumped via patches/@codetrix-studio+... to
+          # ~> 9.0; this proves the newer frameworks actually carry PrivacyInfo.xcprivacy.
+          for fw in GTMAppAuth GTMSessionFetcher GoogleSignIn; do
+            if [ ! -f "$APP/Frameworks/$fw.framework/PrivacyInfo.xcprivacy" ]; then
+              echo "::error::$fw.framework has no PrivacyInfo.xcprivacy — Apple will reject with ITMS-91061 again. Check the GoogleSignIn version pin in the patched CodetrixStudioCapacitorGoogleAuth podspec."
+              exit 1
+            fi
+          done
+          echo "Archive verified: Firebase plist bundled, web assets present, AdMob absent, Apple entitlement signed, GoogleSignIn compiled in, privacy manifests present."
 
       - name: Save IPA artifact
         uses: actions/upload-artifact@v4
