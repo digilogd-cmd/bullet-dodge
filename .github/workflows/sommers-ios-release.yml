@@ -106,6 +106,25 @@ jobs:
             resources.add_file_reference(plist_ref)
           end
 
+          # Same problem, different phase: dropping a new .swift file into
+          # ios/App/App/ does not add it to the Xcode project -- Xcode only
+          # compiles files explicitly listed in the target's Sources build
+          # phase, it does not scan the directory. Build 25 shipped with
+          # DeviceTrialPlugin.swift present on disk but absent from the binary
+          # (confirmed via `strings` on the archived IPA) for exactly this
+          # reason. Register every .swift file in App/ that isn't already a
+          # member of the Sources phase, so any future native plugin file
+          # added the same way doesn't silently go missing again.
+          sources = target.source_build_phase
+          Dir.glob('App/*.swift').each do |path|
+            file_name = File.basename(path)
+            file_ref = app_group.files.find { |file| file.display_name == file_name }
+            file_ref ||= app_group.new_reference(file_name)
+            unless sources.files_references.include?(file_ref)
+              sources.add_file_reference(file_ref)
+            end
+          end
+
           # Sign In with Apple was only ever enabled on the App ID in the Apple
           # Developer portal -- the Xcode project itself never declared the
           # matching entitlement, so ASAuthorizationAppleIDProvider always failed
