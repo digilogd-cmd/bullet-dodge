@@ -437,7 +437,16 @@ jobs:
               exit 1
             fi
           done
-          echo "Archive verified: Firebase plist bundled, web assets present, AdMob absent, Apple entitlement signed, GoogleSignIn compiled in, privacy manifests present."
+          # Build 25 shipped with DeviceTrialPlugin.swift present in ios/App/App/
+          # but absent from the compiled binary, because it was never registered
+          # into the Xcode project's Sources build phase (fixed in the previous
+          # workflow step). Confirm the class symbol actually made it into the
+          # binary this time, not just that the source file exists in the repo.
+          if ! grep -aq 'DeviceTrialPlugin' "$APP/App"; then
+            echo "::error::DeviceTrialPlugin is not compiled into the app binary — the anonymous-auth free-trial guard is silently inert. Check that App/*.swift files are being added to the Sources build phase."
+            exit 1
+          fi
+          echo "Archive verified: Firebase plist bundled, web assets present, AdMob absent, Apple entitlement signed, GoogleSignIn compiled in, privacy manifests present, DeviceTrialPlugin compiled in."
 
       - name: Save IPA artifact
         uses: actions/upload-artifact@v4
