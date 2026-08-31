@@ -142,10 +142,12 @@ jobs:
           # Apple rejected build 98 with ITMS-91061 (missing privacy manifest) for
           # GTMAppAuth, GTMSessionFetcher and GoogleSignIn — CodetrixStudioCapacitorGoogleAuth's
           # podspec pins GoogleSignIn to a 2022-era 6.2.4 that predates Apple's privacy-manifest
-          # requirement (first shipped in GoogleSignIn 7.1.0). Bump the pin so pod install pulls
-          # frameworks that actually carry PrivacyInfo.xcprivacy.
+          # requirement (first shipped in GoogleSignIn 7.1.0). Pin to 7.1 specifically rather than
+          # the latest major (9.x removed GIDGoogleUser.authentication/.serverAuthCode, which this
+          # plugin's Swift code still calls — confirmed by a failed CI run) so pod install pulls
+          # frameworks that carry PrivacyInfo.xcprivacy without breaking the plugin's API surface.
           GOOGLE_AUTH_PODSPEC="../../node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec"
-          sed -i '' "s/s.dependency 'GoogleSignIn', '~> 6.2.4'/s.dependency 'GoogleSignIn', '~> 9.0'/" "$GOOGLE_AUTH_PODSPEC"
+          sed -i '' "s/s.dependency 'GoogleSignIn', '~> 6.2.4'/s.dependency 'GoogleSignIn', '~> 7.1'/" "$GOOGLE_AUTH_PODSPEC"
           grep "GoogleSignIn" "$GOOGLE_AUTH_PODSPEC"
 
           # Podfile.lock still pins the old resolved version — force a fresh resolve
