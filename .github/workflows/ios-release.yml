@@ -148,7 +148,11 @@ jobs:
           sed -i '' "s/s.dependency 'GoogleSignIn', '~> 6.2.4'/s.dependency 'GoogleSignIn', '~> 9.0'/" "$GOOGLE_AUTH_PODSPEC"
           grep "GoogleSignIn" "$GOOGLE_AUTH_PODSPEC"
 
-          pod install
+          # Podfile.lock still pins the old resolved version — force a fresh resolve
+          # against the patched podspec instead of failing on the stale snapshot.
+          rm -f Podfile.lock
+
+          pod install --repo-update
 
           # Extract UUID and Team ID from Provisioning Profile
           security cms -D -i $RUNNER_TEMP/build_pp.mobileprovision > $RUNNER_TEMP/profile.plist
