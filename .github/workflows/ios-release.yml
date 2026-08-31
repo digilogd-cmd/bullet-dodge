@@ -212,9 +212,13 @@ jobs:
         run: |
           APP=$(find "${{ runner.temp }}/build_output" -maxdepth 2 -name "*.app" | head -n1)
           echo "Checking $APP"
+          # CocoaPods ships each manifest inside a generated resource bundle nested in
+          # the framework (e.g. GTMSessionFetcher.framework/GTMSessionFetcher_Core_Privacy.bundle/
+          # PrivacyInfo.xcprivacy) rather than as a bare file at the framework's root —
+          # search recursively instead of assuming one fixed path.
           for fw in GTMAppAuth GTMSessionFetcher GoogleSignIn; do
-            if [ ! -f "$APP/Frameworks/$fw.framework/PrivacyInfo.xcprivacy" ]; then
-              echo "::error::$fw.framework has no PrivacyInfo.xcprivacy — Apple will reject with ITMS-91061 again. Check the GoogleSignIn version pin in the patched CodetrixStudioCapacitorGoogleAuth podspec."
+            if [ -z "$(find "$APP/Frameworks/$fw.framework" -iname 'PrivacyInfo.xcprivacy' -print -quit 2>/dev/null)" ]; then
+              echo "::error::$fw.framework has no PrivacyInfo.xcprivacy anywhere under it — Apple will reject with ITMS-91061 again. Check the GoogleSignIn version pin in the patched CodetrixStudioCapacitorGoogleAuth podspec."
               exit 1
             fi
           done
