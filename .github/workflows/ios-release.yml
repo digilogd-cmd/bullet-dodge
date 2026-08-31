@@ -139,6 +139,15 @@ jobs:
           # Disable code signing for CocoaPods targets by replacing the post_install hook
           perl -0777 -pi -e 's/post_install do \|installer\|.*?end/post_install do \|installer\|\n  assertDeploymentTarget(installer)\n  installer.pods_project.targets.each do \|target\|\n    target.build_configurations.each do \|config\|\n      config.build_settings["EXPANDED_CODE_SIGN_IDENTITY"] = ""\n      config.build_settings["CODE_SIGNING_REQUIRED"] = "NO"\n      config.build_settings["CODE_SIGNING_ALLOWED"] = "NO"\n    end\n  end\nend/s' Podfile
 
+          # Apple rejected build 98 with ITMS-91061 (missing privacy manifest) for
+          # GTMAppAuth, GTMSessionFetcher and GoogleSignIn — CodetrixStudioCapacitorGoogleAuth's
+          # podspec pins GoogleSignIn to a 2022-era 6.2.4 that predates Apple's privacy-manifest
+          # requirement (first shipped in GoogleSignIn 7.1.0). Bump the pin so pod install pulls
+          # frameworks that actually carry PrivacyInfo.xcprivacy.
+          GOOGLE_AUTH_PODSPEC="../../node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec"
+          sed -i '' "s/s.dependency 'GoogleSignIn', '~> 6.2.4'/s.dependency 'GoogleSignIn', '~> 9.0'/" "$GOOGLE_AUTH_PODSPEC"
+          grep "GoogleSignIn" "$GOOGLE_AUTH_PODSPEC"
+
           pod install
 
           # Extract UUID and Team ID from Provisioning Profile
@@ -186,6 +195,18 @@ jobs:
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -exportOptionsPlist $RUNNER_TEMP/exportOptions.plist \
             -exportPath $RUNNER_TEMP/build_output
+
+      - name: 🔒 Verify privacy manifests (ITMS-91061 regression gate)
+        run: |
+          APP=$(find "${{ runner.temp }}/build_output" -maxdepth 2 -name "*.app" | head -n1)
+          echo "Checking $APP"
+          for fw in GTMAppAuth GTMSessionFetcher GoogleSignIn; do
+            if [ ! -f "$APP/Frameworks/$fw.framework/PrivacyInfo.xcprivacy" ]; then
+              echo "::error::$fw.framework has no PrivacyInfo.xcprivacy — Apple will reject with ITMS-91061 again. Check the GoogleSignIn version pin in the patched CodetrixStudioCapacitorGoogleAuth podspec."
+              exit 1
+            fi
+          done
+          echo "Privacy manifests present in GTMAppAuth, GTMSessionFetcher, GoogleSignIn."
 
       - name: 🚀 Upload IPA Artifact to GitHub Workflow
         uses: actions/upload-artifact@v4
