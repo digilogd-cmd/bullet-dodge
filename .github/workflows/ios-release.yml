@@ -150,6 +150,12 @@ jobs:
           sed -i '' "s/s.dependency 'GoogleSignIn', '~> 6.2.4'/s.dependency 'GoogleSignIn', '~> 7.1'/" "$GOOGLE_AUTH_PODSPEC"
           grep "GoogleSignIn" "$GOOGLE_AUTH_PODSPEC"
 
+          # The plugin's own Swift code still calls the pre-7.0 GoogleSignIn API
+          # (GIDGoogleUser.authentication/.serverAuthCode, signIn(with:presenting:...)),
+          # all removed in 7.x. Overlay our patched copy (../../ios-patches) that uses
+          # the current API — see that file's header comment for the full mapping.
+          cp ../../ios-patches/CapacitorGoogleAuth-Plugin.swift ../../node_modules/@codetrix-studio/capacitor-google-auth/ios/Plugin/Plugin.swift
+
           # Podfile.lock still pins the old resolved version — force a fresh resolve
           # against the patched podspec instead of failing on the stale snapshot.
           rm -f Podfile.lock
