@@ -210,14 +210,10 @@ jobs:
 
       - name: 🔒 Verify privacy manifests (ITMS-91061 regression gate)
         run: |
-          APP=$(find "${{ runner.temp }}/build_output" -maxdepth 2 -name "*.app" | head -n1)
+          APP=$(find "${{ runner.temp }}/App.xcarchive/Products/Applications" -maxdepth 1 -name "*.app" | head -n1)
           echo "Checking $APP"
           echo "--- all PrivacyInfo.xcprivacy found anywhere in the app bundle ---"
           find "$APP" -iname 'PrivacyInfo.xcprivacy'
-          echo "--- Frameworks dir contents ---"
-          ls -la "$APP/Frameworks" 2>/dev/null
-          echo "--- GTMAppAuth.framework contents (if present) ---"
-          find "$APP/Frameworks/GTMAppAuth.framework" 2>/dev/null
           # CocoaPods ships each manifest inside a generated resource bundle nested in
           # the framework (e.g. GTMSessionFetcher.framework/GTMSessionFetcher_Core_Privacy.bundle/
           # PrivacyInfo.xcprivacy) rather than as a bare file at the framework's root —
