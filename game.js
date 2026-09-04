@@ -2813,7 +2813,7 @@ if (btnPauseTrigger) {
 requestAnimationFrame(gameLoop);
 
 
-// Google Play Native Billing Bridge
+// Native Billing Bridge (called by whichever platform's purchase flow completes)
 window.onNativePurchaseSuccess = function(productId) {
     let addedCredits = 0;
     // 구글 플레이 콘솔 상품 및 Hangar 상점 정의와 100% 일치
@@ -2833,7 +2833,7 @@ window.onNativePurchaseSuccess = function(productId) {
     
     SFX.playLevelWarp();
     spawnFloatingText(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, `+${addedCredits.toLocaleString()} COINS PURCHASED!`);
-    alert(`[Google Play 결제 완료]\n${addedCredits.toLocaleString()} 코인이 정상적으로 지급되었습니다!`);
+    alert(`[결제 완료]\n${addedCredits.toLocaleString()} 코인이 정상적으로 지급되었습니다!`);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2867,7 +2867,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.Android && window.Android.purchaseSkin) {
                 window.Android.purchaseSkin(sku);
             } else {
-                alert("Google Play Billing is only available on the Android app.\n(Tested SKU: " + sku + ")");
+                alert("In-app purchases require the store app.\n(Tested SKU: " + sku + ")");
                 // Simulate purchase for web testing
                 // window.onNativePurchaseSuccess(sku);
             }
@@ -2878,8 +2878,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Override old functions to prevent errors
-window.initPayPal = function() { console.log('PayPal disabled in favor of Google Play.'); };
-window.requestPortonePayment = function() { console.log('PortOne disabled in favor of Google Play.'); };
+window.initPayPal = function() { console.log('PayPal disabled in favor of native billing.'); };
+window.requestPortonePayment = function() { console.log('PortOne disabled in favor of native billing.'); };
 
 // AdMob Rewarded Ad Native Callbacks
 window.onRewardedAdComplete = function() {
@@ -2936,11 +2936,20 @@ function initNativeIAP() {
         .finished(p => {
             console.log("✅ Apple IAP Finished:", p.id);
             if(p.id === 'pack_starter') completeNativePurchase(10000);
-            if(p.id === 'pack_booster') completeNativePurchase(30000);
+            if(p.id === 'pack_booster') completeNativePurchase(40000);
         });
 
+    // nativeStoreReady used to flip true right after calling initialize(), before
+    // StoreKit had actually fetched product data — store.get(productId) would then
+    // return undefined and requestNativePayment() showed "상품을 찾을 수 없습니다"
+    // even though the button looked usable. store.ready() only fires once products
+    // have actually loaded.
+    store.ready(() => {
+        console.log("🍏 Apple IAP store ready, products loaded.");
+        nativeStoreReady = true;
+    });
+
     store.initialize();
-    nativeStoreReady = true;
 }
 
 function requestNativePayment(productId) {

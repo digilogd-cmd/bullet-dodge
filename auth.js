@@ -286,7 +286,9 @@ if (btnGoogleSignin) {
                 console.log("🍏 Using Native Google Sign In Plugin");
                 
                 // 앱 시작 시 한 번 호출해주는 것이 좋으나, 여기서 안전하게 초기화
-                window.Capacitor.Plugins.GoogleAuth.initialize({
+                // (await 누락 시 configuration이 세팅되기 전에 signIn()이 먼저 도착해
+                // "No active configuration" 네이티브 크래시가 남 — 반드시 await 필요)
+                await window.Capacitor.Plugins.GoogleAuth.initialize({
                     clientId: '251977968081-ccigebh9fthtcf76v5jonr15m3c0mo9s.apps.googleusercontent.com', // iOS Client ID
                     scopes: ['profile', 'email'],
                     grantOfflineAccess: true,
