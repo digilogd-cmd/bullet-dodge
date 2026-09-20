@@ -37,6 +37,8 @@ jobs:
       - name: 🏗️ Build Web Assets & Sync Capacitor iOS
         run: |
           npm run build
+          # Strip Android/Google Play/Toss references from the iOS copy (App Review 2.3.10)
+          node ios-patches/sanitize-www.js
           npx cap add ios || true
           npx cap sync ios
 

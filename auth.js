@@ -48,6 +48,7 @@ const btnEmailSignup = document.getElementById('btn-email-signup');
 const btnGoogleSignin = document.getElementById('btn-google-signin');
 const btnAppleSignin = document.getElementById('btn-apple-signin');
 const btnLogout = document.getElementById('btn-logout');
+const btnDeleteAccount = document.getElementById('btn-delete-account');
 
 const inputEmail = document.getElementById('login-email');
 const inputPassword = document.getElementById('login-password');
@@ -99,6 +100,7 @@ function updatePilotProfileUI(user) {
         
         if (btnLoginOpen) btnLoginOpen.classList.add('hidden');
         if (btnLogout) btnLogout.classList.remove('hidden');
+        if (btnDeleteAccount) btnDeleteAccount.classList.remove('hidden');
     } else {
         // 비로그인 상태 (게스트)
         pilotName.innerText = "GUEST PILOT";
@@ -111,6 +113,7 @@ function updatePilotProfileUI(user) {
         
         if (btnLoginOpen) btnLoginOpen.classList.remove('hidden');
         if (btnLogout) btnLogout.classList.add('hidden');
+        if (btnDeleteAccount) btnDeleteAccount.classList.add('hidden');
     }
 }
 
@@ -519,6 +522,114 @@ if (btnLogout) {
             alert("성공적으로 로그아웃 및 오프라인 전환되었습니다.");
         } catch (error) {
             console.error("로그아웃 에러:", error);
+        }
+    });
+}
+
+// [E] 계정 삭제 (App Store 가이드라인 5.1.1(v): 앱 안에서 계정 삭제를 시작할 수 있어야 함)
+async function reauthenticateForDeletion(user) {
+    const providerId = (user.providerData[0] && user.providerData[0].providerId) || '';
+    const plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
+    const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+    if (providerId === 'apple.com' && isNative && plugins.SignInWithApple) {
+        const response = await plugins.SignInWithApple.authorize({
+            clientId: 'com.retro.bulletdodge',
+            redirectURI: '',
+            scopes: 'email name'
+        });
+        const credential = new firebase.auth.OAuthProvider('apple.com').credential({
+            idToken: response.response.identityToken
+        });
+        await user.reauthenticateWithCredential(credential);
+    } else if (providerId === 'google.com' && isNative && plugins.GoogleAuth) {
+        await plugins.GoogleAuth.initialize({
+            clientId: '251977968081-ccigebh9fthtcf76v5jonr15m3c0mo9s.apps.googleusercontent.com',
+            scopes: ['profile', 'email'],
+            grantOfflineAccess: true,
+        });
+        const response = await plugins.GoogleAuth.signIn();
+        const credential = firebase.auth.GoogleAuthProvider.credential(response.authentication.idToken);
+        await user.reauthenticateWithCredential(credential);
+    } else if (providerId === 'password') {
+        const pw = prompt("보안을 위해 비밀번호를 다시 입력해 주세요.");
+        if (!pw) throw new Error('cancelled');
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, pw);
+        await user.reauthenticateWithCredential(credential);
+    } else {
+        const provider = providerId === 'apple.com'
+            ? new firebase.auth.OAuthProvider('apple.com')
+            : new firebase.auth.GoogleAuthProvider();
+        await user.reauthenticateWithPopup(provider);
+    }
+}
+
+function clearLocalPilotData() {
+    try {
+        Object.keys(localStorage)
+            .filter(k => k.indexOf('cyber_avoid') === 0)
+            .forEach(k => localStorage.removeItem(k));
+    } catch (e) {}
+}
+
+if (btnDeleteAccount) {
+    btnDeleteAccount.addEventListener('click', async () => {
+        if (typeof SFX !== 'undefined') SFX.playBeep();
+
+        const ok = confirm(
+            "계정을 삭제하시겠습니까?\n\n" +
+            "삭제하면 계정과 서버에 저장된 진행 데이터(코인, 기체, 최고 점수)가 영구적으로 삭제되며 되돌릴 수 없습니다."
+        );
+        if (!ok) return;
+
+        if (isMockAuth) {
+            localStorage.removeItem('cyber_avoid_mock_user');
+            clearLocalPilotData();
+            updatePilotProfileUI(null);
+            alert("계정이 삭제되었습니다.");
+            location.reload();
+            return;
+        }
+
+        const user = auth.currentUser;
+        if (!user) {
+            updatePilotProfileUI(null);
+            return;
+        }
+
+        try {
+            btnDeleteAccount.disabled = true;
+
+            // 1) 서버에 저장된 개인 데이터 삭제 (계정 삭제 후에는 권한이 없어 지울 수 없으므로 먼저)
+            try {
+                await db.collection('pilots').doc(user.uid).delete();
+            } catch (e) {
+                console.warn('pilots 문서 삭제 실패(계속 진행):', e);
+            }
+
+            // 2) 계정 삭제 — 로그인한 지 오래되면 재인증 후 재시도
+            try {
+                await user.delete();
+            } catch (e) {
+                if (e && e.code === 'auth/requires-recent-login') {
+                    await reauthenticateForDeletion(user);
+                    await user.delete();
+                } else {
+                    throw e;
+                }
+            }
+
+            clearLocalPilotData();
+            updatePilotProfileUI(null);
+            alert("계정과 저장된 데이터가 모두 삭제되었습니다.");
+            location.reload();
+        } catch (error) {
+            console.error("계정 삭제 에러:", error);
+            if (!(error && error.message === 'cancelled')) {
+                alert("계정 삭제에 실패했습니다. 다시 로그인한 뒤 시도해 주세요.\n" + (error.message || ''));
+            }
+        } finally {
+            btnDeleteAccount.disabled = false;
         }
     });
 }

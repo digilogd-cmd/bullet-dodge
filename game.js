@@ -2909,60 +2909,99 @@ window.onRewardedAdFailed = function() {
     startVirtualAdPlayer();
 };
 // [IAP] Native Apple In-App Purchase with cordova-plugin-purchase (v13+)
+// True when running inside the iOS app. iPadOS 13+ WebViews report a "Macintosh"
+// user agent (no "iPad" in it), so a UA regex alone silently skips every iOS branch
+// on iPads — which is exactly the device App Review tests on. Ask Capacitor first.
+function isIosNativeApp() {
+    try {
+        if (window.Capacitor && typeof window.Capacitor.getPlatform === 'function') {
+            return window.Capacitor.getPlatform() === 'ios';
+        }
+    } catch (e) {}
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+let nativeStoreInitStarted = false;
 let nativeStoreReady = false;
 
-function initNativeIAP() {
+function initNativeIAP(attempt) {
+    attempt = attempt || 0;
+    if (nativeStoreInitStarted) return;
     if (!window.CdvPurchase) {
-        console.log("🍏 CdvPurchase plugin not found (running in pure web?).");
+        // The cordova purchase plugin attaches itself to window after deviceready,
+        // which can land later than our fixed 1s timer — keep polling for ~15s.
+        if (attempt < 30) setTimeout(() => initNativeIAP(attempt + 1), 500);
+        else console.log("🍏 CdvPurchase plugin not found (running in pure web?).");
         return;
     }
-    
+    nativeStoreInitStarted = true;
+
     console.log("🍏 Initializing Native Apple In-App Purchase...");
     const store = window.CdvPurchase.store;
-    
+    const APPLE = window.CdvPurchase.Platform.APPLE_APPSTORE;
+
     store.register([{
-        type: CdvPurchase.ProductType.CONSUMABLE,
+        type: window.CdvPurchase.ProductType.CONSUMABLE,
         id: 'pack_starter',
-        platform: CdvPurchase.Platform.APPLE_APPSTORE,
+        platform: APPLE,
     }, {
-        type: CdvPurchase.ProductType.CONSUMABLE,
+        type: window.CdvPurchase.ProductType.CONSUMABLE,
         id: 'pack_booster',
-        platform: CdvPurchase.Platform.APPLE_APPSTORE,
+        platform: APPLE,
     }]);
 
+    const coinsFor = { pack_starter: 10000, pack_booster: 40000 };
+
+    // v13 API: handlers receive a Transaction (not a product). Deliver the coins,
+    // then finish() so StoreKit stops re-delivering the consumable.
     store.when()
-        .approved(p => p.verify())
-        .verified(p => p.finish())
-        .finished(p => {
-            console.log("✅ Apple IAP Finished:", p.id);
-            if(p.id === 'pack_starter') completeNativePurchase(10000);
-            if(p.id === 'pack_booster') completeNativePurchase(40000);
+        .approved(transaction => {
+            (transaction.products || []).forEach(p => {
+                if (coinsFor[p.id]) completeNativePurchase(coinsFor[p.id]);
+            });
+            transaction.finish();
         });
 
-    // nativeStoreReady used to flip true right after calling initialize(), before
-    // StoreKit had actually fetched product data — store.get(productId) would then
-    // return undefined and requestNativePayment() showed "상품을 찾을 수 없습니다"
-    // even though the button looked usable. store.ready() only fires once products
-    // have actually loaded.
+    store.error(err => {
+        console.warn("🍏 IAP error:", err && err.code, err && err.message);
+    });
+
     store.ready(() => {
         console.log("🍏 Apple IAP store ready, products loaded.");
         nativeStoreReady = true;
     });
 
-    store.initialize();
+    store.initialize([APPLE]);
 }
 
-function requestNativePayment(productId) {
-    if (!nativeStoreReady || !window.CdvPurchase) {
-        alert("Apple 결제 시스템이 초기화되지 않았습니다. 아이폰 실기기에서 테스트해주세요.");
+async function requestNativePayment(productId) {
+    if (!window.CdvPurchase) {
+        alert("결제 시스템을 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+        initNativeIAP();
         return;
     }
-    
+
     const store = window.CdvPurchase.store;
-    if (store.get(productId)) {
-        store.order(productId);
-    } else {
-        alert("상품을 찾을 수 없습니다. App Store Connect에 상품이 등록되어 있는지 확인하세요.");
+    const product = store.get(productId, window.CdvPurchase.Platform.APPLE_APPSTORE);
+    const offer = product && product.getOffer && product.getOffer();
+    if (!product || !offer) {
+        // Product data comes from the App Store asynchronously; ask for a refresh
+        // instead of blaming the user's setup.
+        try { store.update(); } catch (e) {}
+        alert("상품 정보를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+        return;
+    }
+
+    try {
+        const err = await store.order(offer);
+        if (err && err.code !== window.CdvPurchase.ErrorCode.PAYMENT_CANCELLED) {
+            console.warn("🍏 IAP order error:", err.code, err.message);
+            alert("결제를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        }
+    } catch (e) {
+        console.warn("🍏 IAP order exception:", e);
+        alert("결제를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     }
 }
 
@@ -2979,30 +3018,30 @@ function completeNativePurchase(addedCredits) {
 }
 
 // iOS Specific UI adjustments and IAP Binding
-if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
-    document.addEventListener('DOMContentLoaded', () => {
-        // Toss 앱 버튼 숨기기 (타 플랫폼 언급 금지 규정 준수)
-        const toss = document.querySelector('.toss-banner-link');
-        if (toss) toss.style.display = 'none';
-        
-        // Google Play 버튼을 Apple IAP 버튼으로 변경
-        const googlePayBtn = document.getElementById('btn-google-pay');
-        if (googlePayBtn) {
-            googlePayBtn.innerHTML = '🍎 PURCHASE WITH APPLE IAP';
-            googlePayBtn.id = 'btn-apple-pay'; 
-            
-            // 기존 이벤트 리스너 제거 및 교체 (클론 트릭)
-            const newAppleBtn = googlePayBtn.cloneNode(true);
-            googlePayBtn.parentNode.replaceChild(newAppleBtn, googlePayBtn);
-            
-            newAppleBtn.addEventListener('click', () => {
-                if (typeof SFX !== 'undefined') SFX.playBeep();
-                const sku = selectedPackagePrice === '0.99' ? 'pack_starter' : 'pack_booster';
-                requestNativePayment(sku);
-            });
-        }
-        
-        // IAP 시스템 초기화 (지연 호출하여 cordova 플러그인 로드 보장)
-        setTimeout(initNativeIAP, 1000);
-    });
-}
+document.addEventListener('DOMContentLoaded', () => {
+    if (!isIosNativeApp() || window.MSStream) return;
+
+    // Toss 앱 버튼 숨기기 (타 플랫폼 언급 금지 규정 준수)
+    const toss = document.querySelector('.toss-banner-link');
+    if (toss) toss.style.display = 'none';
+
+    // 결제 버튼을 Apple IAP 버튼으로 변경
+    const payBtn = document.getElementById('btn-google-pay');
+    if (payBtn) {
+        payBtn.innerHTML = 'PURCHASE COINS';
+        payBtn.id = 'btn-apple-pay';
+
+        // 기존 이벤트 리스너 제거 및 교체 (클론 트릭)
+        const newAppleBtn = payBtn.cloneNode(true);
+        payBtn.parentNode.replaceChild(newAppleBtn, payBtn);
+
+        newAppleBtn.addEventListener('click', () => {
+            if (typeof SFX !== 'undefined') SFX.playBeep();
+            const sku = selectedPackagePrice === '0.99' ? 'pack_starter' : 'pack_booster';
+            requestNativePayment(sku);
+        });
+    }
+
+    // IAP 시스템 초기화 (플러그인이 늦게 붙어도 재시도)
+    setTimeout(() => initNativeIAP(0), 500);
+});
