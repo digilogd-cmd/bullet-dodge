@@ -1,0 +1,274 @@
+# Custom Times (Flutter) iOS TestFlight. Same no-Mac path as Sommers and Dog Walker.
+#
+# The source is the private digilogd-cmd/custom-times repo, branch ios-app, read with
+# the read-only deploy key in CUSTOM_TIMES_DEPLOY_KEY. CUSTOM_TIMES_API_URL is the
+# server address the app is built against.
+#
+# This repo is public, so logs and artifacts are public too. Do not add the IPA or the
+# built app as an artifact here. The launch screenshot is the only artifact.
+#
+# Run with upload=false to check that the app compiles and opens on the simulator.
+# upload=true also signs it and sends it to TestFlight; that needs the app record to
+# exist in App Store Connect first.
+
+name: Custom Times iOS TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Sign and upload to TestFlight
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: custom-times-ios-testflight
+  cancel-in-progress: false
+
+env:
+  BUNDLE_ID: com.customtimes.customTimes
+  PROFILE_NAME: AppStore com.customtimes.customTimes
+  FLUTTER_VERSION: 3.47.6
+
+jobs:
+  build-ios:
+    name: Build Custom Times
+    runs-on: macos-26
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout Custom Times source
+        uses: actions/checkout@v4
+        with:
+          repository: digilogd-cmd/custom-times
+          ref: ios-app
+          ssh-key: ${{ secrets.CUSTOM_TIMES_DEPLOY_KEY }}
+
+      - name: Install Flutter
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "$FLUTTER_VERSION" https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Get packages
+        run: |
+          set -euo pipefail
+          flutter --version
+          flutter pub get
+
+      - name: Build for the iOS Simulator
+        env:
+          API_URL: ${{ secrets.CUSTOM_TIMES_API_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$API_URL"
+          flutter build ios --simulator --debug --dart-define=CT_API_BASE_URL="$API_URL"
+
+      # Advisory: on Sommers this check proved flaky, so it never blocks the build.
+      - name: Open on the Simulator (advisory)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          SIM_LINE=$(xcrun simctl list devices available | grep -m1 'iPhone')
+          SIM_UDID=$(echo "$SIM_LINE" | grep -oE '[0-9A-Fa-f-]{36}')
+          test -n "$SIM_UDID"
+          echo "Using simulator: $SIM_LINE"
+          xcrun simctl boot "$SIM_UDID"
+          xcrun simctl bootstatus "$SIM_UDID" -b
+          xcrun simctl install "$SIM_UDID" build/ios/iphonesimulator/Runner.app
+          xcrun simctl launch "$SIM_UDID" "$BUNDLE_ID"
+          sleep 25
+          mkdir -p "$RUNNER_TEMP/sim-output"
+          xcrun simctl io "$SIM_UDID" screenshot "$RUNNER_TEMP/sim-output/launch-screenshot.png"
+          xcrun simctl spawn "$SIM_UDID" launchctl list | grep -q "$BUNDLE_ID"
+          xcrun simctl shutdown "$SIM_UDID" || true
+
+      - name: Save simulator screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Custom-Times-Simulator-${{ github.run_number }}
+          path: ${{ runner.temp }}/sim-output/launch-screenshot.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Prepare App Store Connect key and profile
+        if: ${{ inputs.upload }}
+        env:
+          API_KEY_VALUE: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$API_KEY_VALUE"; test -n "$API_KEY_ID"; test -n "$API_ISSUER_ID"
+
+          API_KEY_PATH="$RUNNER_TEMP/AuthKey_${API_KEY_ID}.p8"
+          if printf '%s' "$API_KEY_VALUE" | grep -q 'BEGIN PRIVATE KEY'; then
+            printf '%s\n' "$API_KEY_VALUE" > "$API_KEY_PATH"
+          else
+            printf '%s' "$API_KEY_VALUE" | tr -d '\n\r ' | base64 --decode > "$API_KEY_PATH"
+          fi
+
+          git clone --depth 1 https://github.com/Apple-Actions/download-provisioning-profiles.git "$RUNNER_TEMP/apple-profiles"
+          "$RUNNER_TEMP/apple-profiles/scripts/ensure-bundle-id.sh" \
+            --bundle-id "$BUNDLE_ID" \
+            --name "Custom Times" \
+            --issuer-id "$API_ISSUER_ID" \
+            --api-key-id "$API_KEY_ID" \
+            --api-private-key-path "$API_KEY_PATH"
+          "$RUNNER_TEMP/apple-profiles/scripts/create-provisioning-profile.sh" \
+            --bundle-id "$BUNDLE_ID" \
+            --profile-type IOS_APP_STORE \
+            --name "$PROFILE_NAME" \
+            --issuer-id "$API_ISSUER_ID" \
+            --api-key-id "$API_KEY_ID" \
+            --api-private-key-path "$API_KEY_PATH"
+
+          source "$RUNNER_TEMP/apple-profiles/scripts/lib/asc.sh"
+          ASC_ISSUER_ID="$API_ISSUER_ID"; ASC_KEY_ID="$API_KEY_ID"; ASC_PRIVATE_KEY_PATH="$API_KEY_PATH"
+          asc_load_credentials
+          ENCODED_NAME=$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))' "$PROFILE_NAME")
+          asc_api_get "/v1/profiles?filter[name]=${ENCODED_NAME}&filter[profileType]=IOS_APP_STORE&limit=20"
+          PROFILE_ID=$(printf '%s' "$ASC_API_BODY" | jq -r '[.data[] | select(.attributes.profileState == "ACTIVE")][0].id')
+          test -n "$PROFILE_ID"; test "$PROFILE_ID" != "null"
+          asc_api_get "/v1/profiles/${PROFILE_ID}"
+          printf '%s' "$ASC_API_BODY" | jq -r '.data.attributes.profileContent' | base64 --decode > "$RUNNER_TEMP/app.mobileprovision"
+          test -s "$RUNNER_TEMP/app.mobileprovision"
+
+      - name: Install distribution certificate and profile
+        if: ${{ inputs.upload }}
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APP_STORE_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APP_STORE_P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$CERTIFICATE_BASE64"
+          KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-temp_pwd}"
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          RAW_CERT="$RUNNER_TEMP/raw-cert.p12"
+          CERT_PATH="$RUNNER_TEMP/distribution.p12"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+
+          printf '%s' "$CERTIFICATE_BASE64" | tr -d '\n\r\t ' | base64 --decode > "$RAW_CERT"
+          if openssl pkcs12 -in "$RAW_CERT" -out "$RUNNER_TEMP/cert.pem" -nodes -passin pass:1234 2>/dev/null; then
+            true
+          else
+            openssl pkcs12 -in "$RAW_CERT" -out "$RUNNER_TEMP/cert.pem" -nodes -passin pass:"$P12_PASSWORD"
+          fi
+          if openssl pkcs12 -help 2>&1 | grep -q '\-legacy'; then LEGACY_FLAG='-legacy'; else LEGACY_FLAG=''; fi
+          openssl pkcs12 -export -in "$RUNNER_TEMP/cert.pem" -out "$CERT_PATH" -password pass:1234 $LEGACY_FLAG
+          security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P 1234 -T /usr/bin/codesign -A
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -s "$KEYCHAIN_PATH"
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$RUNNER_TEMP/app.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/app.mobileprovision"
+
+      # Signing goes on the Runner target only, in the project file, so it cannot
+      # leak into plugin targets the way command-line overrides did on Sommers.
+      - name: Build signed IPA
+        if: ${{ inputs.upload }}
+        env:
+          API_URL: ${{ secrets.CUSTOM_TIMES_API_URL }}
+        run: |
+          set -euo pipefail
+          security cms -D -i "$RUNNER_TEMP/app.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+          export TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$RUNNER_TEMP/profile.plist")
+
+          gem install xcodeproj --no-document
+          ruby <<'RUBY'
+          require 'xcodeproj'
+          project = Xcodeproj::Project.open('ios/Runner.xcodeproj')
+          target = project.targets.find { |item| item.name == 'Runner' }
+          abort('Runner target not found') unless target
+
+          target.build_configurations.each do |config|
+            next unless config.name == 'Release'
+            settings = config.build_settings
+            settings['CODE_SIGN_STYLE'] = 'Manual'
+            settings['DEVELOPMENT_TEAM'] = ENV.fetch('TEAM_ID')
+            settings['PROVISIONING_PROFILE_SPECIFIER'] = ENV.fetch('PROFILE_NAME')
+            settings['CODE_SIGN_IDENTITY'] = 'Apple Distribution'
+            settings['CODE_SIGN_IDENTITY[sdk=iphoneos*]'] = 'Apple Distribution'
+          end
+
+          attributes = project.root_object.attributes['TargetAttributes'] ||= {}
+          target_attributes = attributes[target.uuid] ||= {}
+          target_attributes['ProvisioningStyle'] = 'Manual'
+          target_attributes['DevelopmentTeam'] = ENV.fetch('TEAM_ID')
+          project.save
+          RUBY
+
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key><dict>
+              <key>$BUNDLE_ID</key><string>$PROFILE_NAME</string>
+            </dict>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          PLIST
+
+          flutter build ipa --release \
+            --build-number="$GITHUB_RUN_NUMBER" \
+            --dart-define=CT_API_BASE_URL="$API_URL" \
+            --export-options-plist="$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Verify the archived app
+        if: ${{ inputs.upload }}
+        run: |
+          set -euo pipefail
+          APP="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          test -d "$APP"
+          ACTUAL=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")
+          test "$ACTUAL" = "$BUNDLE_ID" || {
+            echo "::error::Bundle ID in the archive ($ACTUAL) does not match $BUNDLE_ID."
+            exit 1
+          }
+          # Without this key every build waits on the export compliance question.
+          test "$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$APP/Info.plist")" = "false"
+          # The API address is compiled in; the localhost default would leave the app empty.
+          grep -aq 'a.run.app' "$APP/Frameworks/App.framework/App" || {
+            echo "::error::The server address is missing from the app."
+            exit 1
+          }
+          test -f "$APP/Frameworks/App.framework/flutter_assets/assets/fonts/NotoSerifKR-Medium.ttf"
+          echo "Archive verified: bundle ID, encryption flag, server address, Korean font."
+
+      - name: Upload to TestFlight
+        if: ${{ inputs.upload }}
+        env:
+          API_KEY_VALUE: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${API_KEY_ID}.p8"
+          if printf '%s' "$API_KEY_VALUE" | grep -q 'BEGIN PRIVATE KEY'; then
+            printf '%s\n' "$API_KEY_VALUE" > "$KEY_PATH"
+          else
+            printf '%s' "$API_KEY_VALUE" | tr -d '\n\r ' | base64 --decode > "$KEY_PATH"
+          fi
+          xcrun altool --upload-app \
+            --type ios \
+            --file build/ios/ipa/*.ipa \
+            --apiKey "$API_KEY_ID" \
+            --apiIssuer "$API_ISSUER_ID"
