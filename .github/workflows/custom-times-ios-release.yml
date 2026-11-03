@@ -229,6 +229,7 @@ jobs:
           flutter build ipa --release \
             --build-number="$GITHUB_RUN_NUMBER" \
             --dart-define=CT_API_BASE_URL="$API_URL" \
+            --dart-define=CT_TEST_CUSTOM=true \
             --export-options-plist="$RUNNER_TEMP/ExportOptions.plist"
 
       - name: Verify the archived app
